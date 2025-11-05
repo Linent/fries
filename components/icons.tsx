@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { IconSvgProps } from "@/types";
+import { IconSvgProps } from "@/types/icons";
 
 export const Logo: React.FC<IconSvgProps> = ({
   size = 36,
@@ -182,5 +182,100 @@ export const SearchIcon = (props: IconSvgProps) => (
       strokeLinejoin="round"
       strokeWidth="2"
     />
+  </svg>
+);
+
+
+export const PlusIcon = ({ size = 24 }: IconSvgProps) => (
+  <svg viewBox="0 0 24 24" height={size} width={size} stroke="currentColor" strokeWidth="1.5" fill="none">
+    <path d="M12 6v12M6 12h12" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export const VerticalDotsIcon = ({ size = 20 }: IconSvgProps) => (
+  <svg viewBox="0 0 24 24" height={size} width={size} fill="currentColor">
+    <path d="M12 5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm0 5.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm0 5.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z" />
+  </svg>
+);
+
+export const ChevronDownIcon = ({ size = 20 }: IconSvgProps) => (
+  <svg viewBox="0 0 24 24" height={size} width={size} stroke="currentColor" strokeWidth="1.5" fill="none">
+    <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+export const UploadIcon = ({ size = 20 }: { size?: number }) => (
+  <svg
+    viewBox="0 0 24 24"
+    height={size}
+    width={size}
+    stroke="currentColor"
+    strokeWidth="1.5"
+    fill="none"
+  >
+    <path
+      d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M12 12V3m0 0l-4 4m4-4l4 4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+export const DownloadIcon = ({ size = 20 }: { size?: number }) => (
+  <svg
+    viewBox="0 0 24 24"
+    height={size}
+    width={size}
+    stroke="currentColor"
+    strokeWidth="1.5"
+    fill="none"
+  >
+    <path
+      d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M12 3v9m0 0l4-4m-4 4l-4-4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+export const RefreshCcwIcon = ({ size = 20 }: { size?: number }) => (
+  <svg
+    viewBox="0 0 24 24"
+    height={size}
+    width={size}
+    stroke="currentColor"
+    strokeWidth="1.5"
+    fill="none"
+  >
+    <path
+      d="M3 3v6h6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M3 9a9 9 0 1 1 9 9 9.003 9.003 0 0 1-8.485-6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+export const PlusCircleIcon = ({ size = 20 }: { size?: number }) => (
+  <svg
+    viewBox="0 0 24 24"
+    height={size}
+    width={size}
+    stroke="currentColor"
+    strokeWidth="1.5"
+    fill="none"
+  >
+    <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M12 8v8M8 12h8" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );

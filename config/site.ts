@@ -1,69 +1,57 @@
 export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "Next.js + HeroUI",
-  description: "Make beautiful websites regardless of your design experience.",
-  navItems: [
+  name: "Sistema de Extensión UFPS", // ✅ nombre del sitio
+  description: "Plataforma de gestión de proyectos de extensión universitaria.", // ✅ descripción del sitio
+
+  sidebarItems: [
     {
-      label: "Home",
-      href: "/",
-    },
-    {
-      label: "Docs",
-      href: "/docs",
-    },
-    {
-      label: "Pricing",
-      href: "/pricing",
-    },
-    {
-      label: "Blog",
-      href: "/blog",
-    },
-    {
-      label: "About",
-      href: "/about",
-    },
-  ],
-  navMenuItems: [
-    {
-      label: "Profile",
-      href: "/profile",
-    },
-    {
-      label: "Dashboard",
+      label: "Inicio",
+      icon: "Home",
       href: "/dashboard",
+      roles: ["administrador", "fries", "formulador", "decano", "director"],
     },
     {
-      label: "Projects",
-      href: "/projects",
+      label: "Proyectos de Extensión",
+      href: "/extension",
+      roles: ["administrador", "fries", "formulador", "decano", "director"],
     },
     {
-      label: "Team",
-      href: "/team",
+      label: "Facultades",
+      href: "/faculty",
+      roles: ["administrador", "fries"],
     },
     {
-      label: "Calendar",
-      href: "/calendar",
+      label: "Usuarios",
+      href: "/user",
+      roles: ["administrador", "fries",],
     },
     {
-      label: "Settings",
-      href: "/settings",
-    },
+          label: "Consultoría",
+          href: "/consultoria",
+          roles: ["administrador", "fries"],
+        },
     {
-      label: "Help & Feedback",
-      href: "/help-feedback",
-    },
+          label: "Actividad / evento cultural",
+          href: "/actividad-cultural",
+          roles: ["administrador", "fries"],
+        },
     {
-      label: "Logout",
-      href: "/logout",
+          label: "Educación continua",
+          href: "/educacion-continua",
+          roles: ["administrador", "fries"],
+        },
+    {
+          label: "Servicios",
+          href: "/servicios",
+          roles: ["administrador", "fries", "formulador"],
+        },
+    
+    {
+      label: "Entidades",
+      icon: "Users",
+      href: "entidades",
+      roles: ["administrador", "fries"],
     },
   ],
-  links: {
-    github: "https://github.com/heroui-inc/heroui",
-    twitter: "https://twitter.com/hero_ui",
-    docs: "https://heroui.com",
-    discord: "https://discord.gg/9b6yyZKmH4",
-    sponsor: "https://patreon.com/jrgarciadev",
-  },
 };
