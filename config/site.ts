@@ -23,6 +23,7 @@ export const siteConfig = {
     },
     {
       label: "Usuarios",
+      icon: "Users",
       href: "/user",
       roles: ["administrador", "fries"],
     },
@@ -49,7 +50,6 @@ export const siteConfig = {
 
     {
       label: "Entidades",
-      icon: "Users",
       href: "entidades",
       roles: ["administrador", "fries"],
     },
