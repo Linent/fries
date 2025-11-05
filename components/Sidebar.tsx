@@ -7,6 +7,21 @@ import * as Icons from "lucide-react";
 import { siteConfig } from "@/config/site";
 import { getTokenPayload } from "@/utils/auth";
 
+// 🔹 Definimos los tipos para los ítems del sidebar
+type SidebarSubItem = {
+  label: string;
+  href: string;
+  roles: string[];
+};
+
+type SidebarItem = {
+  label: string;
+  icon?: string;
+  href?: string;
+  roles: string[];
+  subItems?: SidebarSubItem[]; // ✅ subItems ahora es opcional
+};
+
 export default function Sidebar() {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -25,8 +40,8 @@ export default function Sidebar() {
   };
 
   // 🔍 Filtrar los ítems visibles según el rol
-  const visibleItems = siteConfig.sidebarItems.filter(
-    (item) => !userRole || item.roles.includes(userRole)
+  const visibleItems: SidebarItem[] = siteConfig.sidebarItems.filter(
+    (item: SidebarItem) => !userRole || item.roles.includes(userRole)
   );
 
   return (
