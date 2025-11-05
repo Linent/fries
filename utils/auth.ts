@@ -1,7 +1,6 @@
 // utils/auth.ts
 import { jwtDecode } from "jwt-decode";
 
-
 interface TokenPayload {
   _id: string;
   role: string;

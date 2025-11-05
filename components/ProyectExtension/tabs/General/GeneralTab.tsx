@@ -35,7 +35,9 @@ export default function GeneralTab({
     setMessage(null);
 
     if (!form.title || !form.typeProject || !form.year || !form.semester) {
-      setError("Por favor completa todos los campos obligatorios marcados con *");
+      setError(
+        "Por favor completa todos los campos obligatorios marcados con *"
+      );
       return;
     }
 
@@ -66,12 +68,7 @@ export default function GeneralTab({
           readOnly={!editable}
           required
         />
-        <Input
-          label="Código"
-          name="code"
-          value={form.code}
-          readOnly
-        />
+        <Input label="Código" name="code" value={form.code} readOnly />
 
         <Select
           label="Tipo de proyecto *"
@@ -82,9 +79,7 @@ export default function GeneralTab({
           required
         >
           {projectTypes.map((type) => (
-            <SelectItem key={type}>
-              {type}
-            </SelectItem>
+            <SelectItem key={type}>{type}</SelectItem>
           ))}
         </Select>
 

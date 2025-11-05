@@ -77,31 +77,31 @@ export default function ResultadosImpactosTab({
 
   // 💾 Guardar
   const handleSave = async () => {
-  try {
-    setSaving(true);
-    const updatedProject = await updateProject(project._id, data);
+    try {
+      setSaving(true);
+      const updatedProject = await updateProject(project._id, data);
 
-    // ✅ Si el backend devuelve el proyecto actualizado, actualiza el padre
-    if (onProjectUpdate && updatedProject) {
-      onProjectUpdate(updatedProject);
+      // ✅ Si el backend devuelve el proyecto actualizado, actualiza el padre
+      if (onProjectUpdate && updatedProject) {
+        onProjectUpdate(updatedProject);
+      }
+
+      addToast({
+        title: "Cambios guardados",
+        description:
+          "Los resultados e impactos fueron actualizados correctamente.",
+        color: "success",
+      });
+    } catch (error) {
+      addToast({
+        title: "Error al guardar",
+        description: "Ocurrió un error al guardar los cambios.",
+        color: "danger",
+      });
+    } finally {
+      setSaving(false);
     }
-
-    addToast({
-      title: "Cambios guardados",
-      description: "Los resultados e impactos fueron actualizados correctamente.",
-      color: "success",
-    });
-  } catch (error) {
-    addToast({
-      title: "Error al guardar",
-      description: "Ocurrió un error al guardar los cambios.",
-      color: "danger",
-    });
-  } finally {
-    setSaving(false);
-  }
-};
-
+  };
 
   // 📋 Tabla de resultados
   const renderResultsTable = () => (

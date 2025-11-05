@@ -46,7 +46,9 @@ export default function ProjectPage() {
 
   return (
     <LayoutDashboard>
-      <h1 className="text-2xl font-bold text-gray-700 mb-4">Proyectos de Extensión</h1>
+      <h1 className="text-2xl font-bold text-gray-700 mb-4">
+        Proyectos de Extensión
+      </h1>
       <div className="bg-white rounded-xl shadow p-4">
         <ProjectsTableAdvanced projects={projects} loading={loading} />
       </div>

@@ -6,7 +6,11 @@ import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { isTokenExpired } from "@/utils/auth";
 
-export default function LayoutDashboard({ children }: { children: React.ReactNode }) {
+export default function LayoutDashboard({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
 
   useEffect(() => {

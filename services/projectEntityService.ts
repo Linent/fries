@@ -6,8 +6,12 @@ import { ProjectEntityDTO } from "@/types";
 const base = `${BACKEND_URL}/project-entity`;
 
 // Lista de entidades vinculadas a un proyecto
-export const getProjectEntities = async (projectId: string): Promise<ProjectEntityDTO[]> => {
-  const { data } = await api.get(`${base}/${projectId}`, { headers: getAuthHeaders() });
+export const getProjectEntities = async (
+  projectId: string
+): Promise<ProjectEntityDTO[]> => {
+  const { data } = await api.get(`${base}/${projectId}`, {
+    headers: getAuthHeaders(),
+  });
   return data;
 };
 
@@ -33,14 +37,24 @@ export const updateProjectEntity = async (
 ): Promise<ProjectEntityDTO> => {
   const body = {
     ...payload,
-    ...(payload.aporteEspecie !== undefined ? { aporteEspecie: Number(payload.aporteEspecie) } : {}),
-    ...(payload.aporteEfectivo !== undefined ? { aporteEfectivo: Number(payload.aporteEfectivo) } : {}),
+    ...(payload.aporteEspecie !== undefined
+      ? { aporteEspecie: Number(payload.aporteEspecie) }
+      : {}),
+    ...(payload.aporteEfectivo !== undefined
+      ? { aporteEfectivo: Number(payload.aporteEfectivo) }
+      : {}),
   };
-  const { data } = await api.put(`${base}/${id}`, body, { headers: getAuthHeaders() });
+  const { data } = await api.put(`${base}/${id}`, body, {
+    headers: getAuthHeaders(),
+  });
   return data;
 };
 
-export const deleteProjectEntity = async (id: string): Promise<{ ok: boolean }> => {
-  const { data } = await api.delete(`${base}/${id}`, { headers: getAuthHeaders() });
+export const deleteProjectEntity = async (
+  id: string
+): Promise<{ ok: boolean }> => {
+  const { data } = await api.delete(`${base}/${id}`, {
+    headers: getAuthHeaders(),
+  });
   return data;
 };

@@ -52,8 +52,15 @@ export default function EntityModal({
   const isView = mode === "view";
   const isEdit = mode === "edit";
   const isCreate = mode === "create";
-  type TypeEntity = "pública" | "privada" | "mixta" | "internacional" | "comunitaria" | "institucional" | "";
-  
+  type TypeEntity =
+    | "pública"
+    | "privada"
+    | "mixta"
+    | "internacional"
+    | "comunitaria"
+    | "institucional"
+    | "";
+
   const [form, setForm] = useState<{
     name: string;
     nit: string;
@@ -141,15 +148,16 @@ export default function EntityModal({
         await updateEntity(entity._id, {
           ...form,
           typeEntity: form.typeEntity ? form.typeEntity : undefined,
-          sector: form.sector ? form.sector as
-            | "educación"
-            | "salud"
-            | "tecnología"
-            | "cultural"
-            | "ambiental"
-            | "agropecuario"
-            | "turismo"
-            | "otro"
+          sector: form.sector
+            ? (form.sector as
+                | "educación"
+                | "salud"
+                | "tecnología"
+                | "cultural"
+                | "ambiental"
+                | "agropecuario"
+                | "turismo"
+                | "otro")
             : undefined,
         });
         addToast({

@@ -64,8 +64,7 @@ export default function Topbar() {
     const href = "/" + pathSegments.slice(0, index + 1).join("/");
 
     let label =
-      routeNames[segment] ||
-      segment.charAt(0).toUpperCase() + segment.slice(1);
+      routeNames[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
 
     // 🔹 Si el segmento es un ObjectId, mostrar el nombre del proyecto
     if (segment.match(/^[a-f0-9]{24}$/)) {
@@ -76,8 +75,11 @@ export default function Topbar() {
   });
 
   return (
-    <HeroUINavbar className="flex items-center justify-between bg-white shadow px-6 py-3" maxWidth="full" position="sticky">
-    
+    <HeroUINavbar
+      className="flex items-center justify-between bg-white shadow px-6 py-3"
+      maxWidth="full"
+      position="sticky"
+    >
       {/* 🧭 Breadcrumb dinámico */}
       <Breadcrumbs>
         {breadcrumbs.length > 0 ? (
@@ -117,7 +119,6 @@ export default function Topbar() {
           </DropdownMenu>
         </Dropdown>
       </div>
-    
     </HeroUINavbar>
   );
 }

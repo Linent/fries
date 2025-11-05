@@ -30,9 +30,10 @@ export default function DescripcionTab({
   });
 
   const [saving, setSaving] = useState(false);
-  const [alert, setAlert] = useState<{ type: "success" | "danger"; text: string } | null>(
-    null
-  );
+  const [alert, setAlert] = useState<{
+    type: "success" | "danger";
+    text: string;
+  } | null>(null);
 
   // Evita loop infinito
   const didInit = useRef(false);
@@ -46,7 +47,8 @@ export default function DescripcionTab({
         location: project.location || "",
         objectiveGeneral: project.objectiveGeneral || "",
         objectivesSpecific:
-          Array.isArray(project.objectivesSpecific) && project.objectivesSpecific.length > 0
+          Array.isArray(project.objectivesSpecific) &&
+          project.objectivesSpecific.length > 0
             ? project.objectivesSpecific
             : [""],
       });
@@ -90,7 +92,9 @@ export default function DescripcionTab({
         justification: formData.justification,
         location: formData.location,
         objectiveGeneral: formData.objectiveGeneral,
-        objectivesSpecific: formData.objectivesSpecific.filter((o) => o.trim() !== ""),
+        objectivesSpecific: formData.objectivesSpecific.filter(
+          (o) => o.trim() !== ""
+        ),
       };
 
       await updateProject(project._id, payload);

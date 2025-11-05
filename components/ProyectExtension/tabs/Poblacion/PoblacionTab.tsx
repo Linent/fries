@@ -147,7 +147,10 @@ export default function PoblacionTab({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} className="text-center text-gray-400 italic">
+                <TableCell
+                  colSpan={3}
+                  className="text-center text-gray-400 italic"
+                >
                   No hay poblaciones registradas
                 </TableCell>
               </TableRow>
@@ -172,11 +175,7 @@ export default function PoblacionTab({
         "ciclo_vital",
         poblacionCicloVital
       )}
-      {renderTable(
-        "Población por condición",
-        "condicion",
-        poblacionCondicion
-      )}
+      {renderTable("Población por condición", "condicion", poblacionCondicion)}
       {renderTable("Población por grupo", "grupo", poblacionGrupo)}
 
       {/* Botón Guardar */}

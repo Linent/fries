@@ -185,9 +185,15 @@ export const SearchIcon = (props: IconSvgProps) => (
   </svg>
 );
 
-
 export const PlusIcon = ({ size = 24 }: IconSvgProps) => (
-  <svg viewBox="0 0 24 24" height={size} width={size} stroke="currentColor" strokeWidth="1.5" fill="none">
+  <svg
+    viewBox="0 0 24 24"
+    height={size}
+    width={size}
+    stroke="currentColor"
+    strokeWidth="1.5"
+    fill="none"
+  >
     <path d="M12 6v12M6 12h12" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
@@ -199,7 +205,14 @@ export const VerticalDotsIcon = ({ size = 20 }: IconSvgProps) => (
 );
 
 export const ChevronDownIcon = ({ size = 20 }: IconSvgProps) => (
-  <svg viewBox="0 0 24 24" height={size} width={size} stroke="currentColor" strokeWidth="1.5" fill="none">
+  <svg
+    viewBox="0 0 24 24"
+    height={size}
+    width={size}
+    stroke="currentColor"
+    strokeWidth="1.5"
+    fill="none"
+  >
     <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
@@ -254,11 +267,7 @@ export const RefreshCcwIcon = ({ size = 20 }: { size?: number }) => (
     strokeWidth="1.5"
     fill="none"
   >
-    <path
-      d="M3 3v6h6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    <path d="M3 3v6h6" strokeLinecap="round" strokeLinejoin="round" />
     <path
       d="M3 9a9 9 0 1 1 9 9 9.003 9.003 0 0 1-8.485-6"
       strokeLinecap="round"
@@ -275,7 +284,13 @@ export const PlusCircleIcon = ({ size = 20 }: { size?: number }) => (
     strokeWidth="1.5"
     fill="none"
   >
-    <circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" />
+    <circle
+      cx="12"
+      cy="12"
+      r="9"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
     <path d="M12 8v8M8 12h8" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );

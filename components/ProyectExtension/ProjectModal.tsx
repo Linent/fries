@@ -163,7 +163,10 @@ export default function ProjectModal({
                 // ⏳ Skeleton mientras se guarda
                 <Card className="w-full space-y-5 p-4" radius="lg">
                   {[...Array(6)].map((_, i) => (
-                    <Skeleton key={i} className="h-10 rounded-lg bg-default-300" />
+                    <Skeleton
+                      key={i}
+                      className="h-10 rounded-lg bg-default-300"
+                    />
                   ))}
                 </Card>
               ) : (
@@ -189,7 +192,9 @@ export default function ProjectModal({
                     label="Descripción del proyecto"
                     placeholder="Describe brevemente el propósito y alcance del proyecto..."
                     value={formData.description}
-                    onValueChange={(value) => handleChange("description", value)}
+                    onValueChange={(value) =>
+                      handleChange("description", value)
+                    }
                     required
                     minRows={3}
                     variant="bordered"
@@ -235,13 +240,13 @@ export default function ProjectModal({
                       placeholder="Seleccione semestre..."
                       selectedKeys={
                         formData.semester
-                          ? new Set([formData.semester.charAt(0).toUpperCase() +
-                              formData.semester.slice(1)])
+                          ? new Set([
+                              formData.semester.charAt(0).toUpperCase() +
+                                formData.semester.slice(1),
+                            ])
                           : new Set()
                       }
-                      onChange={(e) =>
-                        handleChange("semester", e.target.value)
-                      }
+                      onChange={(e) => handleChange("semester", e.target.value)}
                       className="flex-1"
                       required
                     >
@@ -264,9 +269,7 @@ export default function ProjectModal({
                           ? new Set([formData.faculty])
                           : new Set()
                       }
-                      onChange={(e) =>
-                        handleChange("faculty", e.target.value)
-                      }
+                      onChange={(e) => handleChange("faculty", e.target.value)}
                       required
                     >
                       {faculties.map((fac) => (
@@ -311,4 +314,3 @@ export default function ProjectModal({
     </Modal>
   );
 }
-

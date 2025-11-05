@@ -17,10 +17,13 @@ import {
   DropdownItem,
 } from "@heroui/react";
 import { Spinner } from "@heroui/spinner";
-import { getProjectById, updateProject, updateProjectStatus } from "@/services/proyectServices";
+import {
+  getProjectById,
+  updateProject,
+  updateProjectStatus,
+} from "@/services/proyectServices";
 import { getTokenPayload } from "@/utils/auth";
-import { Project  } from "@/types";
-
+import { Project } from "@/types";
 
 export default function ProjectDetail({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -28,7 +31,10 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
   const [form, setForm] = useState<Partial<Project>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "danger"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "danger";
+    text: string;
+  } | null>(null);
 
   const user = getTokenPayload();
   const role = user?.role || "";
@@ -53,12 +59,22 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
 
   const NEXT_STATUS_BY_ROLE: Record<string, Record<string, string[]>> = {
     formulador: { en_formulacion: ["en_revision_director"] },
-    director_programa: { en_revision_director: ["en_revision_decano", "en_formulacion"] },
-    decano: { en_revision_decano: ["en_revision_fries", "en_revision_director"] },
+    director_programa: {
+      en_revision_director: ["en_revision_decano", "en_formulacion"],
+    },
+    decano: {
+      en_revision_decano: ["en_revision_fries", "en_revision_director"],
+    },
     fries: { en_revision_fries: ["aprobado", "rechazado", "en_formulacion"] },
     vicerrector: { en_revision_fries: ["aprobado", "rechazado"] },
     admin: {
-      en_formulacion: ["en_revision_director", "en_revision_decano", "en_revision_fries", "aprobado", "rechazado"],
+      en_formulacion: [
+        "en_revision_director",
+        "en_revision_decano",
+        "en_revision_fries",
+        "aprobado",
+        "rechazado",
+      ],
     },
   };
 
@@ -68,10 +84,12 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
     if (role === "formulador")
       return (
         project.status === "en_formulacion" &&
-        (
-          (typeof project.createdBy === "object" && project.createdBy !== null && " _id" in project.createdBy && (project.createdBy as { _id: string })._id === userId) ||
-          (typeof project.createdBy === "string" && project.createdBy === userId)
-        )
+        ((typeof project.createdBy === "object" &&
+          project.createdBy !== null &&
+          " _id" in project.createdBy &&
+          (project.createdBy as { _id: string })._id === userId) ||
+          (typeof project.createdBy === "string" &&
+            project.createdBy === userId))
       );
     return false;
   };
@@ -100,13 +118,17 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
     fetchData();
   }, [projectId]);
 
-  const editable = useMemo(() => (project ? canEdit(project, role, userId) : false), [project, role, userId]);
+  const editable = useMemo(
+    () => (project ? canEdit(project, role, userId) : false),
+    [project, role, userId]
+  );
   const statusOptions = useMemo(
     () => (project ? NEXT_STATUS_BY_ROLE[role]?.[project.status] || [] : []),
     [project, role]
   );
 
-  const handleChange = (key: keyof Project, value: any) => setForm((p) => ({ ...p, [key]: value }));
+  const handleChange = (key: keyof Project, value: any) =>
+    setForm((p) => ({ ...p, [key]: value }));
 
   const handleChangeStatus = async (status: string) => {
     if (!project) return;
@@ -114,7 +136,10 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
     try {
       const updated = await updateProjectStatus(project._id!, status);
       setProject(updated);
-      setMessage({ type: "success", text: "Estado actualizado correctamente." });
+      setMessage({
+        type: "success",
+        text: "Estado actualizado correctamente.",
+      });
     } catch {
       setMessage({ type: "danger", text: "Error al cambiar el estado." });
     } finally {
@@ -128,7 +153,10 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
     try {
       const updated = await updateProject(project._id!, form);
       setProject(updated);
-      setMessage({ type: "success", text: "Proyecto actualizado correctamente." });
+      setMessage({
+        type: "success",
+        text: "Proyecto actualizado correctamente.",
+      });
     } catch {
       setMessage({ type: "danger", text: "Error al guardar los cambios." });
     } finally {
@@ -161,7 +189,9 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
             </DropdownTrigger>
             <DropdownMenu onAction={(key) => handleChangeStatus(String(key))}>
               {statusOptions.map((status) => (
-                <DropdownItem key={status}>{STATUS_LABEL[status as StatusKey]}</DropdownItem>
+                <DropdownItem key={status}>
+                  {STATUS_LABEL[status as StatusKey]}
+                </DropdownItem>
               ))}
             </DropdownMenu>
           </Dropdown>
@@ -176,21 +206,38 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
       <Tabs aria-label="Detalles del proyecto" color="primary">
         <Tab key="general" title="General">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <Input label="Título" value={form.title || ""} onValueChange={(v) => handleChange("title", v)} disabled={!editable} />
+            <Input
+              label="Título"
+              value={form.title || ""}
+              onValueChange={(v) => handleChange("title", v)}
+              disabled={!editable}
+            />
             <Input label="Código" value={form.code || ""} disabled />
             <Select
               label="Tipo de proyecto"
-              selectedKeys={form.typeProject ? new Set([form.typeProject]) : new Set()}
-              onChange={(e) => handleChange("typeProject" as any, e.target.value)}
+              selectedKeys={
+                form.typeProject ? new Set([form.typeProject]) : new Set()
+              }
+              onChange={(e) =>
+                handleChange("typeProject" as any, e.target.value)
+              }
               disabled={!editable}
             >
               <SelectItem key="Remunerado">Remunerado</SelectItem>
               <SelectItem key="Solidario">Solidario</SelectItem>
             </Select>
-            <Input label="Año" type="number" value={String(form.year || "")} onValueChange={(v) => handleChange("year" as any, v)} disabled={!editable} />
+            <Input
+              label="Año"
+              type="number"
+              value={String(form.year || "")}
+              onValueChange={(v) => handleChange("year" as any, v)}
+              disabled={!editable}
+            />
             <Select
               label="Semestre"
-              selectedKeys={form.semester ? new Set([form.semester]) : new Set()}
+              selectedKeys={
+                form.semester ? new Set([form.semester]) : new Set()
+              }
               onChange={(e) => handleChange("semester" as any, e.target.value)}
               disabled={!editable}
             >
@@ -217,11 +264,15 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
         </Tab>
 
         <Tab key="documentos" title="Documentos">
-          <p className="p-4 text-gray-600">Gestión de documentos (pendiente de implementación)</p>
+          <p className="p-4 text-gray-600">
+            Gestión de documentos (pendiente de implementación)
+          </p>
         </Tab>
 
         <Tab key="comentarios" title="Comentarios">
-          <p className="p-4 text-gray-600">Sección de comentarios (pendiente de implementación)</p>
+          <p className="p-4 text-gray-600">
+            Sección de comentarios (pendiente de implementación)
+          </p>
         </Tab>
       </Tabs>
     </div>

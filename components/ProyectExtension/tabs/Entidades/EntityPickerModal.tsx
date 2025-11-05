@@ -44,9 +44,10 @@ export default function EntityPickerModal({
   const [selectedEntity, setSelectedEntity] = useState<any | null>(null);
   const [aporteEspecie, setAporteEspecie] = useState("");
   const [aporteEfectivo, setAporteEfectivo] = useState("");
-  const [message, setMessage] = useState<{ type: "success" | "danger"; text: string } | null>(
-    null
-  );
+  const [message, setMessage] = useState<{
+    type: "success" | "danger";
+    text: string;
+  } | null>(null);
 
   // 📄 Paginación
   const [page, setPage] = useState(1);
@@ -54,37 +55,40 @@ export default function EntityPickerModal({
 
   // 🔍 Búsqueda con debounce (500ms)
   const fetchEntities = useMemo(
-  () =>
-    debounce(async (query: string) => {
-      setLoading(true);
-      try {
-        const data = await getEntities(query);
-        setEntities(data);
-        setPage(1); // reiniciar página al buscar
-      } catch (error) {
-        console.error("Error al buscar entidades:", error);
-        setMessage({ type: "danger", text: "No se pudieron cargar las entidades." });
-      } finally {
-        setLoading(false);
-      }
-    }, 500),
-  []
-);
+    () =>
+      debounce(async (query: string) => {
+        setLoading(true);
+        try {
+          const data = await getEntities(query);
+          setEntities(data);
+          setPage(1); // reiniciar página al buscar
+        } catch (error) {
+          console.error("Error al buscar entidades:", error);
+          setMessage({
+            type: "danger",
+            text: "No se pudieron cargar las entidades.",
+          });
+        } finally {
+          setLoading(false);
+        }
+      }, 500),
+    []
+  );
 
- // 🧹 Limpiar debounce cuando se desmonte
-useEffect(() => {
-  return () => {
-    fetchEntities.cancel();
-  };
-}, [fetchEntities]);
+  // 🧹 Limpiar debounce cuando se desmonte
+  useEffect(() => {
+    return () => {
+      fetchEntities.cancel();
+    };
+  }, [fetchEntities]);
 
-// 🧠 Llamar la búsqueda cuando cambia el texto o se abre el modal
-useEffect(() => {
-  if (isOpen) {
-    setSelectedEntity(null);
-    fetchEntities(search.trim());
-  }
-}, [isOpen, search, fetchEntities]);
+  // 🧠 Llamar la búsqueda cuando cambia el texto o se abre el modal
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedEntity(null);
+      fetchEntities(search.trim());
+    }
+  }, [isOpen, search, fetchEntities]);
 
   // 🧮 Calcular entidades visibles en la página actual
   const paginatedEntities = useMemo(() => {
@@ -97,7 +101,10 @@ useEffect(() => {
   // 🔗 Vincular entidad
   const handleVincular = () => {
     if (!selectedEntity) {
-      setMessage({ type: "danger", text: "Por favor, selecciona una entidad." });
+      setMessage({
+        type: "danger",
+        text: "Por favor, selecciona una entidad.",
+      });
       return;
     }
     onConfirm({
@@ -138,7 +145,12 @@ useEffect(() => {
       </AnimatePresence>
 
       {/* 🧩 Modal principal */}
-      <Modal isOpen={isOpen} onOpenChange={onClose} size="4xl" scrollBehavior="inside">
+      <Modal
+        isOpen={isOpen}
+        onOpenChange={onClose}
+        size="4xl"
+        scrollBehavior="inside"
+      >
         <ModalContent>
           <ModalHeader className="text-lg font-semibold text-gray-800 mt-2">
             Vincular entidad existente
@@ -205,7 +217,9 @@ useEffect(() => {
                       <TableRow
                         key={entity._id}
                         className={
-                          selectedEntity?._id === entity._id ? "bg-green-50" : ""
+                          selectedEntity?._id === entity._id
+                            ? "bg-green-50"
+                            : ""
                         }
                       >
                         <TableCell className="font-medium text-gray-900">

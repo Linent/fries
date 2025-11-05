@@ -31,9 +31,10 @@ export default function EntidadesTab({
 }) {
   const [items, setItems] = useState<ProjectEntityDTO[]>([]);
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState<{ type: "success" | "danger"; text: string } | null>(
-    null
-  );
+  const [msg, setMsg] = useState<{
+    type: "success" | "danger";
+    text: string;
+  } | null>(null);
 
   const [openPicker, setOpenPicker] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
@@ -109,17 +110,27 @@ export default function EntidadesTab({
     <div className="p-4 space-y-8">
       {/* 🔔 Alert con duración automática */}
       {msg && (
-        <Alert color={msg.type} variant="solid" className="mb-6 rounded-lg shadow-sm">
+        <Alert
+          color={msg.type}
+          variant="solid"
+          className="mb-6 rounded-lg shadow-sm"
+        >
           {msg.text}
         </Alert>
       )}
 
       {/* 🔘 Encabezado y acciones */}
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-bold text-gray-800">Entidades vinculadas</h3>
+        <h3 className="text-lg font-bold text-gray-800">
+          Entidades vinculadas
+        </h3>
         {editable && (
           <div className="flex gap-2">
-            <Button color="primary" variant="flat" onPress={() => setOpenPicker(true)}>
+            <Button
+              color="primary"
+              variant="flat"
+              onPress={() => setOpenPicker(true)}
+            >
               Vincular entidad existente
             </Button>
             <Button color="danger" onPress={() => setOpenCreate(true)}>
@@ -154,7 +165,9 @@ export default function EntidadesTab({
         <TableBody
           items={items}
           isLoading={loading}
-          emptyContent={loading ? "Cargando..." : "No hay entidades vinculadas."}
+          emptyContent={
+            loading ? "Cargando..." : "No hay entidades vinculadas."
+          }
         >
           {(item) => (
             <TableRow key={item._id}>

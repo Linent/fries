@@ -24,29 +24,29 @@ export const siteConfig = {
     {
       label: "Usuarios",
       href: "/user",
-      roles: ["administrador", "fries",],
+      roles: ["administrador", "fries"],
     },
     {
-          label: "Consultoría",
-          href: "/consultoria",
-          roles: ["administrador", "fries"],
-        },
+      label: "Consultoría",
+      href: "/consultoria",
+      roles: ["administrador", "fries"],
+    },
     {
-          label: "Actividad / evento cultural",
-          href: "/actividad-cultural",
-          roles: ["administrador", "fries"],
-        },
+      label: "Actividad / evento cultural",
+      href: "/actividad-cultural",
+      roles: ["administrador", "fries"],
+    },
     {
-          label: "Educación continua",
-          href: "/educacion-continua",
-          roles: ["administrador", "fries"],
-        },
+      label: "Educación continua",
+      href: "/educacion-continua",
+      roles: ["administrador", "fries"],
+    },
     {
-          label: "Servicios",
-          href: "/servicios",
-          roles: ["administrador", "fries", "formulador"],
-        },
-    
+      label: "Servicios",
+      href: "/servicios",
+      roles: ["administrador", "fries", "formulador"],
+    },
+
     {
       label: "Entidades",
       icon: "Users",

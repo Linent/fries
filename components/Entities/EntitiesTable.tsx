@@ -31,10 +31,7 @@ import {
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import {
-  toggleEntityActive,
-  deleteEntity,
-} from "@/services/entityService";
+import { toggleEntityActive, deleteEntity } from "@/services/entityService";
 import EntityModal from "@/components/Entities/EntityModal";
 
 export default function EntitiesTable({
@@ -48,7 +45,9 @@ export default function EntitiesTable({
   const [filterValue, setFilterValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<any>(null);
-  const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "view">(
+    "create"
+  );
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -154,76 +153,73 @@ export default function EntitiesTable({
   };
 
   // 🔧 Render de celdas
-  const renderCell = useCallback(
-    (entity: any, columnKey: string) => {
-      switch (columnKey) {
-        case "name":
-          return <p className="font-semibold">{entity.name}</p>;
-        case "nit":
-          return <p>{entity.nit}</p>;
-        case "typeEntity":
-          return (
-            <Chip size="sm" color="primary" variant="flat">
-              {entity.typeEntity}
-            </Chip>
-          );
-        case "sector":
-          return <p>{entity.sector}</p>;
-        case "city":
-          return <p>{entity.city || "N/A"}</p>;
-        case "active":
-          return (
-            <Switch
-              isSelected={entity.active}
-              onChange={() => handleToggleActive(entity._id, entity.active)}
-              color={entity.active ? "success" : "danger"}
-            />
-          );
-        case "actions":
-          return (
-            <Dropdown>
-              <DropdownTrigger>
-                <Button isIconOnly size="sm" variant="light">
-                  <VerticalDotsIcon className="text-default-300" />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu>
-                <DropdownItem
-                  key="view"
-                  onPress={() => {
-                    setSelectedEntity(entity);
-                    setModalMode("view");
-                    setIsModalOpen(true);
-                  }}
-                >
-                  Ver
-                </DropdownItem>
-                <DropdownItem
-                  key="edit"
-                  onPress={() => {
-                    setSelectedEntity(entity);
-                    setModalMode("edit");
-                    setIsModalOpen(true);
-                  }}
-                >
-                  Editar
-                </DropdownItem>
-                <DropdownItem
-                  key="delete"
-                  color="danger"
-                  onPress={() => handleDelete(entity._id)}
-                >
-                  Eliminar
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          );
-        default:
-          return (entity as any)[columnKey];
-      }
-    },
-    []
-  );
+  const renderCell = useCallback((entity: any, columnKey: string) => {
+    switch (columnKey) {
+      case "name":
+        return <p className="font-semibold">{entity.name}</p>;
+      case "nit":
+        return <p>{entity.nit}</p>;
+      case "typeEntity":
+        return (
+          <Chip size="sm" color="primary" variant="flat">
+            {entity.typeEntity}
+          </Chip>
+        );
+      case "sector":
+        return <p>{entity.sector}</p>;
+      case "city":
+        return <p>{entity.city || "N/A"}</p>;
+      case "active":
+        return (
+          <Switch
+            isSelected={entity.active}
+            onChange={() => handleToggleActive(entity._id, entity.active)}
+            color={entity.active ? "success" : "danger"}
+          />
+        );
+      case "actions":
+        return (
+          <Dropdown>
+            <DropdownTrigger>
+              <Button isIconOnly size="sm" variant="light">
+                <VerticalDotsIcon className="text-default-300" />
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu>
+              <DropdownItem
+                key="view"
+                onPress={() => {
+                  setSelectedEntity(entity);
+                  setModalMode("view");
+                  setIsModalOpen(true);
+                }}
+              >
+                Ver
+              </DropdownItem>
+              <DropdownItem
+                key="edit"
+                onPress={() => {
+                  setSelectedEntity(entity);
+                  setModalMode("edit");
+                  setIsModalOpen(true);
+                }}
+              >
+                Editar
+              </DropdownItem>
+              <DropdownItem
+                key="delete"
+                color="danger"
+                onPress={() => handleDelete(entity._id)}
+              >
+                Eliminar
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        );
+      default:
+        return (entity as any)[columnKey];
+    }
+  }, []);
 
   return (
     <>
@@ -301,7 +297,9 @@ export default function EntitiesTable({
           items={items}
           isLoading={loading}
           emptyContent="No hay entidades registradas"
-          loadingContent={<Spinner color="primary" label="Cargando entidades..." />}
+          loadingContent={
+            <Spinner color="primary" label="Cargando entidades..." />
+          }
         >
           {(item) => (
             <TableRow key={item._id}>

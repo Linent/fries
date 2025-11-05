@@ -23,7 +23,6 @@ export const getUsers = async (q?: string, role?: string) => {
   return response.data; // <== Esto devuelve el array directamente
 };
 
-
 export const loginUser = async (email: string, password: string) => {
   const response = await api.post(`${BACKEND_URL}/${UserPath}/login`, {
     email,
@@ -38,7 +37,7 @@ export const registerUser = async (userData: IUser) => {
     userData,
     {
       headers: getAuthHeaders(),
-    },
+    }
   );
 
   return response.data;
@@ -50,26 +49,26 @@ export const registerDocente = async (userData: UserDocente) => {
     userData,
     {
       headers: getAuthHeaders(),
-    },
+    }
   );
 
   return response.data;
 };
 export const getUserById = async (userId: string) => {
   const response = await api.get(`${BACKEND_URL}/${UserPath}/${userId}`, {
-    headers: getAuthHeaders(),  
+    headers: getAuthHeaders(),
   });
 
   return response.data;
-  }
+};
 export const updateUser = async (userId: string, userData: Partial<IUser>) => {
   const response = await api.put(
     `${BACKEND_URL}/${UserPath}/${userId}`,
     userData,
     {
       headers: getAuthHeaders(),
-    },
-  ); 
+    }
+  );
   return response.data;
 };
 

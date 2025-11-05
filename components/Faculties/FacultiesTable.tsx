@@ -33,10 +33,7 @@ import FacultyModal from "./FacultyModal";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import {
-  toggleFacultyActive,
-  deleteFaculty,
-} from "@/services/facultyService";
+import { toggleFacultyActive, deleteFaculty } from "@/services/facultyService";
 
 export default function FacultiesTable({ faculties, loading }: any) {
   const [filterValue, setFilterValue] = useState("");
@@ -44,9 +41,14 @@ export default function FacultiesTable({ faculties, loading }: any) {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [facultyList, setFacultyList] = useState(faculties);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<"create" | "view" | "edit">("create");
+  const [modalMode, setModalMode] = useState<"create" | "view" | "edit">(
+    "create"
+  );
   const [selectedFaculty, setSelectedFaculty] = useState<any>(null);
-  const [message, setMessage] = useState<{ type: "success" | "danger"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "danger";
+    text: string;
+  } | null>(null);
 
   React.useEffect(() => {
     setFacultyList(faculties);
@@ -151,7 +153,9 @@ export default function FacultiesTable({ faculties, loading }: any) {
     try {
       const updated = await toggleFacultyActive(id);
       setFacultyList((prev: any[]) =>
-        prev.map((f: any) => (f._id === id ? { ...f, active: updated.active } : f))
+        prev.map((f: any) =>
+          f._id === id ? { ...f, active: updated.active } : f
+        )
       );
 
       addToast({
@@ -193,78 +197,75 @@ export default function FacultiesTable({ faculties, loading }: any) {
   };
 
   // ⚙️ Render de celdas
-  const renderCell = useCallback(
-    (faculty: any, columnKey: string) => {
-      switch (columnKey) {
-        case "code":
-          return <p className="font-medium">{faculty.code}</p>;
-        case "name":
-          return <p>{faculty.name}</p>;
-        case "description":
-          return <p>{faculty.description || "Sin descripción"}</p>;
-        case "active":
-          return (
-            <div className="flex items-center gap-2">
-              <Switch
-                isSelected={faculty.active}
-                color={faculty.active ? "success" : "danger"}
-                size="sm"
-                onChange={() => handleToggleActive(faculty._id)}
-              />
-              <Chip
-                color={faculty.active ? "success" : "danger"}
-                variant="flat"
-                size="sm"
+  const renderCell = useCallback((faculty: any, columnKey: string) => {
+    switch (columnKey) {
+      case "code":
+        return <p className="font-medium">{faculty.code}</p>;
+      case "name":
+        return <p>{faculty.name}</p>;
+      case "description":
+        return <p>{faculty.description || "Sin descripción"}</p>;
+      case "active":
+        return (
+          <div className="flex items-center gap-2">
+            <Switch
+              isSelected={faculty.active}
+              color={faculty.active ? "success" : "danger"}
+              size="sm"
+              onChange={() => handleToggleActive(faculty._id)}
+            />
+            <Chip
+              color={faculty.active ? "success" : "danger"}
+              variant="flat"
+              size="sm"
+            >
+              {faculty.active ? "Activa" : "Inactiva"}
+            </Chip>
+          </div>
+        );
+      case "actions":
+        return (
+          <Dropdown>
+            <DropdownTrigger>
+              <Button isIconOnly size="sm" variant="light">
+                <VerticalDotsIcon className="text-default-300" />
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu>
+              <DropdownItem
+                key="view"
+                onPress={() => {
+                  setSelectedFaculty(faculty);
+                  setModalMode("view");
+                  setIsModalOpen(true);
+                }}
               >
-                {faculty.active ? "Activa" : "Inactiva"}
-              </Chip>
-            </div>
-          );
-        case "actions":
-          return (
-            <Dropdown>
-              <DropdownTrigger>
-                <Button isIconOnly size="sm" variant="light">
-                  <VerticalDotsIcon className="text-default-300" />
-                </Button>
-              </DropdownTrigger>
-              <DropdownMenu>
-                <DropdownItem
-                  key="view"
-                  onPress={() => {
-                    setSelectedFaculty(faculty);
-                    setModalMode("view");
-                    setIsModalOpen(true);
-                  }}
-                >
-                  Ver detalles
-                </DropdownItem>
-                <DropdownItem
-                  key="edit"
-                  onPress={() => {
-                    setSelectedFaculty(faculty);
-                    setModalMode("edit");
-                    setIsModalOpen(true);
-                  }}
-                >
-                  Editar
-                </DropdownItem>
-                <DropdownItem
-                  key="delete"
-                  color="danger"
-                  onPress={() => handleDelete(faculty._id)}
-                >
-                  Eliminar
-                </DropdownItem>
-              </DropdownMenu>
-            </Dropdown>
-          );
-        default:
-          return (faculty as any)[columnKey];
-      }
-    },
-    []
-  );
+                Ver detalles
+              </DropdownItem>
+              <DropdownItem
+                key="edit"
+                onPress={() => {
+                  setSelectedFaculty(faculty);
+                  setModalMode("edit");
+                  setIsModalOpen(true);
+                }}
+              >
+                Editar
+              </DropdownItem>
+              <DropdownItem
+                key="delete"
+                color="danger"
+                onPress={() => handleDelete(faculty._id)}
+              >
+                Eliminar
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        );
+      default:
+        return (faculty as any)[columnKey];
+    }
+  }, []);
 
   // 🔼 Top Content
   const topContent = (
@@ -332,7 +333,8 @@ export default function FacultiesTable({ faculties, loading }: any) {
       )}
 
       <div className="flex justify-end text-sm text-gray-500">
-        Mostrando {items.length} de {facultyList.filter((f: any) => !f.deleted).length} facultades
+        Mostrando {items.length} de{" "}
+        {facultyList.filter((f: any) => !f.deleted).length} facultades
       </div>
     </div>
   );
@@ -385,7 +387,9 @@ export default function FacultiesTable({ faculties, loading }: any) {
           items={items}
           emptyContent="No se encontraron facultades."
           isLoading={loading}
-          loadingContent={<Spinner color="danger" label="Cargando facultades..." />}
+          loadingContent={
+            <Spinner color="danger" label="Cargando facultades..." />
+          }
         >
           {(item: any) => (
             <TableRow key={item._id}>

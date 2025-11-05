@@ -47,26 +47,26 @@ export interface IUser {
   enable?: boolean;
   createdAt?: string;
 }
-export interface Faculty{
+export interface Faculty {
   _id: string;
   name: string;
   code: string;
   description?: string;
 }
 export interface UserDocente {
-  tipo_documento: string,
-  codigo: string,
-  dni: string,
-  firstName: string,
-  secondName: string,
-  firstLastName: string,
-  secondLastName: string,
-  academic_program: string,
-  celular: string,
-  email: string,
-  dateofBirth: string,
-  password: string,
-  role: string
+  tipo_documento: string;
+  codigo: string;
+  dni: string;
+  firstName: string;
+  secondName: string;
+  firstLastName: string;
+  secondLastName: string;
+  academic_program: string;
+  celular: string;
+  email: string;
+  dateofBirth: string;
+  password: string;
+  role: string;
 }
 
 export const routeNames: Record<string, string> = {
@@ -82,11 +82,13 @@ export const routeNames: Record<string, string> = {
   profile: "Perfil",
   faculty: "Facultades",
   entidades: "Entidades",
-  
 };
 
 // config/projectStatus.ts
-export const projectStatusMap: Record<string, { label: string; color: string }> = {
+export const projectStatusMap: Record<
+  string,
+  { label: string; color: string }
+> = {
   en_formulacion: {
     label: "En formulación",
     color: "bg-blue-100 text-blue-800",
@@ -141,8 +143,22 @@ export interface EntityDTO {
   _id?: string;
   name: string;
   nit: string;
-  typeEntity: "pública" | "privada" | "mixta" | "internacional" | "comunitaria" | "institucional";
-  sector?: "educación" | "salud" | "tecnología" | "cultural" | "ambiental" | "agropecuario" | "turismo" | "otro";
+  typeEntity:
+    | "pública"
+    | "privada"
+    | "mixta"
+    | "internacional"
+    | "comunitaria"
+    | "institucional";
+  sector?:
+    | "educación"
+    | "salud"
+    | "tecnología"
+    | "cultural"
+    | "ambiental"
+    | "agropecuario"
+    | "turismo"
+    | "otro";
   representative?: string;
   contactEmail?: string;
   contactPhone?: string;
@@ -162,7 +178,10 @@ export const tipoDocumentoOptions = [
   { label: "Pasaporte", value: "PA" },
   { label: "Registro civil de nacimiento", value: "RC" },
   { label: "Permiso especial de permanencia", value: "PEP" },
-  { label: "Número de Identificación Tributaria (para personas jurídicas)", value: "NIT" },
+  {
+    label: "Número de Identificación Tributaria (para personas jurídicas)",
+    value: "NIT",
+  },
   { label: "Carné diplomático", value: "CD" },
   { label: "Número único de identificación personal", value: "NUIP" },
   { label: "Documento nacional de identidad (otros países)", value: "DNI" },
@@ -186,20 +205,56 @@ export const poblacionCicloVital = [
 ];
 
 export const poblacionCondicion = [
-  { label: "Vulnerabilidad social - Violencia intrafamiliar", value: "violencia_intrafamiliar" },
-  { label: "Vulnerabilidad social - Violencia sexual", value: "violencia_sexual" },
-  { label: "Vulnerabilidad social - Riesgo o abandono", value: "riesgo_abandono" },
-  { label: "Vulnerabilidad social - Habitante de la calle", value: "habitante_calle" },
-  { label: "Vulnerabilidad social - Mujeres cabeza de familia", value: "mujeres_cabeza_familia" },
+  {
+    label: "Vulnerabilidad social - Violencia intrafamiliar",
+    value: "violencia_intrafamiliar",
+  },
+  {
+    label: "Vulnerabilidad social - Violencia sexual",
+    value: "violencia_sexual",
+  },
+  {
+    label: "Vulnerabilidad social - Riesgo o abandono",
+    value: "riesgo_abandono",
+  },
+  {
+    label: "Vulnerabilidad social - Habitante de la calle",
+    value: "habitante_calle",
+  },
+  {
+    label: "Vulnerabilidad social - Mujeres cabeza de familia",
+    value: "mujeres_cabeza_familia",
+  },
   { label: "Vulnerabilidad económica - Desempleo", value: "desempleo" },
-  { label: "Vulnerabilidad económica - Explotación laboral", value: "explotacion_laboral" },
-  { label: "Vulnerabilidad económica - Tráfico de personas", value: "trafico_personas" },
+  {
+    label: "Vulnerabilidad económica - Explotación laboral",
+    value: "explotacion_laboral",
+  },
+  {
+    label: "Vulnerabilidad económica - Tráfico de personas",
+    value: "trafico_personas",
+  },
   { label: "Vulnerabilidad económica - Prostitución", value: "prostitucion" },
-  { label: "Necesidades educativas especiales - Discapacidad", value: "discapacidad" },
-  { label: "Necesidades educativas especiales - Talentos excepcionales", value: "talentos_excepcionales" },
-  { label: "Afectados por la violencia - Desplazamiento", value: "desplazamiento" },
-  { label: "Afectados por la violencia - Reincorporación", value: "reincorporacion" },
-  { label: "Afectados por la violencia - Desmovilización", value: "desmovilizacion" },
+  {
+    label: "Necesidades educativas especiales - Discapacidad",
+    value: "discapacidad",
+  },
+  {
+    label: "Necesidades educativas especiales - Talentos excepcionales",
+    value: "talentos_excepcionales",
+  },
+  {
+    label: "Afectados por la violencia - Desplazamiento",
+    value: "desplazamiento",
+  },
+  {
+    label: "Afectados por la violencia - Reincorporación",
+    value: "reincorporacion",
+  },
+  {
+    label: "Afectados por la violencia - Desmovilización",
+    value: "desmovilizacion",
+  },
   { label: "Grupos Étnicos - Indígenas", value: "indigenas" },
   { label: "Grupos Étnicos - Afrocolombianos", value: "afrocolombianos" },
   { label: "Grupos Étnicos - Rrom o Gitano", value: "rrom" },

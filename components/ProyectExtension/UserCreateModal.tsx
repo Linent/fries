@@ -25,7 +25,12 @@ interface Props {
   fixedRole?: "director" | "coautor" | "estudiante" | null;
 }
 
-export default function UserCreateModal({ isOpen, onClose, onSuccess, fixedRole }: Props) {
+export default function UserCreateModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  fixedRole,
+}: Props) {
   const isStudent = fixedRole === "estudiante";
 
   const [formData, setFormData] = useState<Partial<IUser>>({
@@ -33,7 +38,10 @@ export default function UserCreateModal({ isOpen, onClose, onSuccess, fixedRole 
     role: isStudent ? "estudiante" : "docente",
   });
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState<{ type: "success" | "danger"; text: string } | null>(null);
+  const [msg, setMsg] = useState<{
+    type: "success" | "danger";
+    text: string;
+  } | null>(null);
 
   const handleChange = (key: keyof IUser, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -64,17 +72,34 @@ export default function UserCreateModal({ isOpen, onClose, onSuccess, fixedRole 
   return (
     <Modal isOpen={isOpen} onOpenChange={onClose} size="2xl">
       <ModalContent>
-        <ModalHeader>Registrar nuevo {isStudent ? "estudiante" : "docente"}</ModalHeader>
+        <ModalHeader>
+          Registrar nuevo {isStudent ? "estudiante" : "docente"}
+        </ModalHeader>
         <ModalBody className="grid grid-cols-2 gap-3">
-          <Input label="Primer nombre" onChange={(e) => handleChange("firstName", e.target.value)} />
-          <Input label="Primer apellido" onChange={(e) => handleChange("firstLastName", e.target.value)} />
-          <Input label="Correo electrónico" onChange={(e) => handleChange("email", e.target.value)} />
-          <Input label="Contraseña" type="password" onChange={(e) => handleChange("password", e.target.value)} />
+          <Input
+            label="Primer nombre"
+            onChange={(e) => handleChange("firstName", e.target.value)}
+          />
+          <Input
+            label="Primer apellido"
+            onChange={(e) => handleChange("firstLastName", e.target.value)}
+          />
+          <Input
+            label="Correo electrónico"
+            onChange={(e) => handleChange("email", e.target.value)}
+          />
+          <Input
+            label="Contraseña"
+            type="password"
+            onChange={(e) => handleChange("password", e.target.value)}
+          />
           <Input label="Rol del usuario" value={formData.role} readOnly />
           {msg && <Alert color={msg.type}>{msg.text}</Alert>}
         </ModalBody>
         <ModalFooter>
-          <Button variant="flat" color="danger" onPress={onClose}>Cancelar</Button>
+          <Button variant="flat" color="danger" onPress={onClose}>
+            Cancelar
+          </Button>
           <Button color="primary" isLoading={loading} onPress={handleSubmit}>
             Crear y vincular
           </Button>

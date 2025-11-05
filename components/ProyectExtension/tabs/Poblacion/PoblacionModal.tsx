@@ -1,6 +1,16 @@
 "use client";
 import { useState, useMemo } from "react";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, Input, Select, SelectItem } from "@heroui/react";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  Input,
+  Select,
+  SelectItem,
+} from "@heroui/react";
 
 interface PoblacionModalProps {
   title: string;
@@ -36,7 +46,13 @@ export default function PoblacionModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="5xl" placement="center" backdrop="blur">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="5xl"
+      placement="center"
+      backdrop="blur"
+    >
       <ModalContent>
         <ModalHeader>{title}</ModalHeader>
         <ModalBody>
@@ -47,9 +63,7 @@ export default function PoblacionModal({
             onChange={(e) => setSelected(e.target.value)}
           >
             {availableOptions.map((opt) => (
-              <SelectItem key={opt.value}>
-                {opt.label}
-              </SelectItem>
+              <SelectItem key={opt.value}>{opt.label}</SelectItem>
             ))}
           </Select>
 
@@ -65,7 +79,11 @@ export default function PoblacionModal({
           <Button variant="flat" color="danger" onPress={onClose}>
             Cancelar
           </Button>
-          <Button color="primary" onPress={handleSave} isDisabled={!selected || cantidad <= 0}>
+          <Button
+            color="primary"
+            onPress={handleSave}
+            isDisabled={!selected || cantidad <= 0}
+          >
             Guardar
           </Button>
         </ModalFooter>

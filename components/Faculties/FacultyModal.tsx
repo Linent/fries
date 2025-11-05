@@ -59,8 +59,8 @@ export default function FacultyModal({
     mode === "view"
       ? "Detalles de Facultad"
       : mode === "edit"
-      ? "Editar Facultad"
-      : "Nueva Facultad";
+        ? "Editar Facultad"
+        : "Nueva Facultad";
 
   const handleSubmit = async () => {
     if (!formData.code || !formData.name) {
@@ -88,7 +88,8 @@ export default function FacultyModal({
       }, 1200);
     } catch (error: any) {
       setErrorMsg(
-        error?.message || "No se pudo guardar la facultad. Inténtalo nuevamente."
+        error?.message ||
+          "No se pudo guardar la facultad. Inténtalo nuevamente."
       );
     } finally {
       setLoading(false);
@@ -112,8 +113,8 @@ export default function FacultyModal({
                   isView
                     ? "text-primary"
                     : isEdit
-                    ? "text-blue-600"
-                    : "text-success"
+                      ? "text-blue-600"
+                      : "text-success"
                 }`}
               >
                 {getTitle()}
@@ -123,42 +124,44 @@ export default function FacultyModal({
             <ModalBody>
               <div className="flex flex-col gap-4">
                 <Input
-  label="Código"
-  placeholder="Ej. FIS01"
-  value={formData.code}
-  onValueChange={(v) => setFormData({ ...formData, code: v })}
-  isDisabled={isView}
-  required
-  classNames={{
-    inputWrapper: isView ? "bg-gray-100" : "",
-    input: isView ? "text-gray-800 font-medium" : "",
-  }}
-/>
+                  label="Código"
+                  placeholder="Ej. FIS01"
+                  value={formData.code}
+                  onValueChange={(v) => setFormData({ ...formData, code: v })}
+                  isDisabled={isView}
+                  required
+                  classNames={{
+                    inputWrapper: isView ? "bg-gray-100" : "",
+                    input: isView ? "text-gray-800 font-medium" : "",
+                  }}
+                />
 
-<Input
-  label="Nombre"
-  placeholder="Ej. Facultad de Ingeniería"
-  value={formData.name}
-  onValueChange={(v) => setFormData({ ...formData, name: v })}
-  isDisabled={isView}
-  required
-  classNames={{
-    inputWrapper: isView ? "bg-gray-100" : "",
-    input: isView ? "text-gray-800 font-medium" : "",
-  }}
-/>
+                <Input
+                  label="Nombre"
+                  placeholder="Ej. Facultad de Ingeniería"
+                  value={formData.name}
+                  onValueChange={(v) => setFormData({ ...formData, name: v })}
+                  isDisabled={isView}
+                  required
+                  classNames={{
+                    inputWrapper: isView ? "bg-gray-100" : "",
+                    input: isView ? "text-gray-800 font-medium" : "",
+                  }}
+                />
 
-<Textarea
-  label="Descripción"
-  placeholder="Descripción breve..."
-  value={formData.description}
-  onValueChange={(v) => setFormData({ ...formData, description: v })}
-  isDisabled={isView}
-  classNames={{
-    inputWrapper: isView ? "bg-gray-100" : "",
-    input: isView ? "text-gray-800 font-medium" : "",
-  }}
-/>
+                <Textarea
+                  label="Descripción"
+                  placeholder="Descripción breve..."
+                  value={formData.description}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, description: v })
+                  }
+                  isDisabled={isView}
+                  classNames={{
+                    inputWrapper: isView ? "bg-gray-100" : "",
+                    input: isView ? "text-gray-800 font-medium" : "",
+                  }}
+                />
 
                 {errorMsg && (
                   <Alert color="danger" variant="solid">

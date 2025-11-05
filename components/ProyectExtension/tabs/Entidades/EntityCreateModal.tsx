@@ -46,7 +46,11 @@ export default function EntityCreateModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onCreatedAndLink: (payload: { entityId: string; aporteEspecie: number; aporteEfectivo: number }) => void;
+  onCreatedAndLink: (payload: {
+    entityId: string;
+    aporteEspecie: number;
+    aporteEfectivo: number;
+  }) => void;
 }) {
   const [form, setForm] = useState({
     name: "",
@@ -64,7 +68,10 @@ export default function EntityCreateModal({
   const [aporteEspecie, setAporteEspecie] = useState("");
   const [aporteEfectivo, setAporteEfectivo] = useState("");
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState<{ type: "success" | "danger"; text: string } | null>(null);
+  const [msg, setMsg] = useState<{
+    type: "success" | "danger";
+    text: string;
+  } | null>(null);
 
   const handleChange = (key: keyof typeof form, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -95,7 +102,10 @@ export default function EntityCreateModal({
         aporteEspecie: Number(aporteEspecie) || 0,
         aporteEfectivo: Number(aporteEfectivo) || 0,
       });
-      setMsg({ type: "success", text: "Entidad creada y vinculada correctamente." });
+      setMsg({
+        type: "success",
+        text: "Entidad creada y vinculada correctamente.",
+      });
       setTimeout(() => {
         onClose();
         setMsg(null);
@@ -112,11 +122,18 @@ export default function EntityCreateModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={onClose} size="3xl" scrollBehavior="inside">
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={onClose}
+      size="3xl"
+      scrollBehavior="inside"
+    >
       <ModalContent>
         <ModalHeader>Registrar nueva entidad</ModalHeader>
         <ModalBody>
-          <p className="text-sm text-gray-500 mb-2">Registre datos obligatorios (*)</p>
+          <p className="text-sm text-gray-500 mb-2">
+            Registre datos obligatorios (*)
+          </p>
 
           {msg && (
             <Alert color={msg.type} variant="solid" className="mb-3">
@@ -125,13 +142,23 @@ export default function EntityCreateModal({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Input label="Nombre *" value={form.name} onValueChange={(v) => handleChange("name", v)} />
-            <Input label="NIT *" value={form.nit} onValueChange={(v) => handleChange("nit", v)} />
+            <Input
+              label="Nombre *"
+              value={form.name}
+              onValueChange={(v) => handleChange("name", v)}
+            />
+            <Input
+              label="NIT *"
+              value={form.nit}
+              onValueChange={(v) => handleChange("nit", v)}
+            />
 
             <Select
               label="Tipo de entidad *"
               selectedKeys={form.typeEntity ? [form.typeEntity] : []}
-              onSelectionChange={(keys) => handleChange("typeEntity", Array.from(keys)[0] as string)}
+              onSelectionChange={(keys) =>
+                handleChange("typeEntity", Array.from(keys)[0] as string)
+              }
             >
               {TYPE_OPTIONS.map((t) => (
                 <SelectItem key={t}>{t}</SelectItem>
@@ -141,7 +168,9 @@ export default function EntityCreateModal({
             <Select
               label="Sector (opcional)"
               selectedKeys={form.sector ? [form.sector] : []}
-              onSelectionChange={(keys) => handleChange("sector", Array.from(keys)[0] as string)}
+              onSelectionChange={(keys) =>
+                handleChange("sector", Array.from(keys)[0] as string)
+              }
             >
               {SECTOR_OPTIONS.map((s) => (
                 <SelectItem key={s}>{s}</SelectItem>
@@ -164,16 +193,47 @@ export default function EntityCreateModal({
               key="1"
               aria-label="Información adicional"
               title="Información adicional de contacto"
-              indicator={<ChevronDown className="h-4 w-4 transition-transform duration-200" />}
+              indicator={
+                <ChevronDown className="h-4 w-4 transition-transform duration-200" />
+              }
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Input label="Representante" value={form.representative} onValueChange={(v) => handleChange("representative", v)} />
-                <Input label="Email de contacto" type="email" value={form.contactEmail} onValueChange={(v) => handleChange("contactEmail", v)} />
-                <Input label="Teléfono" value={form.contactPhone} onValueChange={(v) => handleChange("contactPhone", v)} />
-                <Input label="Dirección" value={form.address} onValueChange={(v) => handleChange("address", v)} />
-                <Input label="Ciudad" value={form.city} onValueChange={(v) => handleChange("city", v)} />
-                <Input label="País" value={form.country} onValueChange={(v) => handleChange("country", v)} />
-                <Input label="Sitio web" value={form.website} onValueChange={(v) => handleChange("website", v)} />
+                <Input
+                  label="Representante"
+                  value={form.representative}
+                  onValueChange={(v) => handleChange("representative", v)}
+                />
+                <Input
+                  label="Email de contacto"
+                  type="email"
+                  value={form.contactEmail}
+                  onValueChange={(v) => handleChange("contactEmail", v)}
+                />
+                <Input
+                  label="Teléfono"
+                  value={form.contactPhone}
+                  onValueChange={(v) => handleChange("contactPhone", v)}
+                />
+                <Input
+                  label="Dirección"
+                  value={form.address}
+                  onValueChange={(v) => handleChange("address", v)}
+                />
+                <Input
+                  label="Ciudad"
+                  value={form.city}
+                  onValueChange={(v) => handleChange("city", v)}
+                />
+                <Input
+                  label="País"
+                  value={form.country}
+                  onValueChange={(v) => handleChange("country", v)}
+                />
+                <Input
+                  label="Sitio web"
+                  value={form.website}
+                  onValueChange={(v) => handleChange("website", v)}
+                />
               </div>
             </AccordionItem>
           </Accordion>

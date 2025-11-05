@@ -111,8 +111,7 @@ export default function ProjectsTableAdvanced({
       const q = filterValue.toLowerCase();
       data = data.filter(
         (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.code.toLowerCase().includes(q)
+          p.title.toLowerCase().includes(q) || p.code.toLowerCase().includes(q)
       );
     }
 
@@ -440,7 +439,9 @@ export default function ProjectsTableAdvanced({
           items={items}
           emptyContent={"No se encontraron proyectos."}
           isLoading={loading}
-          loadingContent={<Spinner color="danger" label="Cargando proyectos..." />}
+          loadingContent={
+            <Spinner color="danger" label="Cargando proyectos..." />
+          }
         >
           {(item) => (
             <TableRow key={item.id}>
