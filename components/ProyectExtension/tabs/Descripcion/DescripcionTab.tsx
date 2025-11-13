@@ -10,6 +10,7 @@ import {
   CardBody,
   Alert,
   Spinner,
+  addToast,
 } from "@heroui/react";
 import { PlusCircleIcon } from "@/components/icons";
 import { updateProject } from "@/services/proyectServices";
@@ -17,9 +18,11 @@ import { updateProject } from "@/services/proyectServices";
 export default function DescripcionTab({
   project,
   editable,
+  onProjectUpdate,
 }: {
   project: any;
   editable: boolean;
+  onProjectUpdate?: (updatedProject: any) => void;
 }) {
   const [formData, setFormData] = useState({
     description: "",
@@ -30,14 +33,13 @@ export default function DescripcionTab({
   });
 
   const [saving, setSaving] = useState(false);
-  const [alert, setAlert] = useState<{
-    type: "success" | "danger";
-    text: string;
-  } | null>(null);
+  const [alert, setAlert] = useState<{ type: "success" | "danger"; text: string } | null>(
+    null
+  );
 
-  // Evita loop infinito
   const didInit = useRef(false);
 
+  // 🧠 Inicializa datos cuando llega el proyecto
   useEffect(() => {
     if (project && !didInit.current) {
       didInit.current = true;
@@ -47,27 +49,42 @@ export default function DescripcionTab({
         location: project.location || "",
         objectiveGeneral: project.objectiveGeneral || "",
         objectivesSpecific:
-          Array.isArray(project.objectivesSpecific) &&
-          project.objectivesSpecific.length > 0
+          Array.isArray(project.objectivesSpecific) && project.objectivesSpecific.length > 0
             ? project.objectivesSpecific
             : [""],
       });
     }
   }, [project]);
 
-  // Manejo de cambios generales
+  // 🔄 Si el padre actualiza el proyecto (por ejemplo, otra tab)
+  useEffect(() => {
+    if (project && didInit.current) {
+      setFormData({
+        description: project.description || "",
+        justification: project.justification || "",
+        location: project.location || "",
+        objectiveGeneral: project.objectiveGeneral || "",
+        objectivesSpecific:
+          Array.isArray(project.objectivesSpecific) && project.objectivesSpecific.length > 0
+            ? project.objectivesSpecific
+            : [""],
+      });
+    }
+  }, [project]);
+
+  // 📝 Cambios en campos generales
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Manejo de cambios en objetivos específicos
+  // 🧩 Cambios en objetivos específicos
   const handleObjectiveChange = (index: number, value: string) => {
     const updated = [...formData.objectivesSpecific];
     updated[index] = value;
     setFormData((prev) => ({ ...prev, objectivesSpecific: updated }));
   };
 
-  // Agregar objetivo
+  // ➕ Agregar objetivo
   const addObjective = () => {
     if (!formData.objectivesSpecific.at(-1)?.trim()) return;
     setFormData((prev) => ({
@@ -76,14 +93,14 @@ export default function DescripcionTab({
     }));
   };
 
-  // Eliminar objetivo
+  // ❌ Eliminar objetivo
   const removeObjective = (index: number) => {
     if (formData.objectivesSpecific.length <= 1) return;
     const updated = formData.objectivesSpecific.filter((_, i) => i !== index);
     setFormData((prev) => ({ ...prev, objectivesSpecific: updated }));
   };
 
-  // Guardar en backend
+  // 💾 Guardar en backend y actualizar el padre
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -92,15 +109,18 @@ export default function DescripcionTab({
         justification: formData.justification,
         location: formData.location,
         objectiveGeneral: formData.objectiveGeneral,
-        objectivesSpecific: formData.objectivesSpecific.filter(
-          (o) => o.trim() !== ""
-        ),
+        objectivesSpecific: formData.objectivesSpecific.filter((o) => o.trim() !== ""),
       };
 
-      await updateProject(project._id, payload);
-      setAlert({
-        type: "success",
-        text: "✅ Descripción del proyecto actualizada correctamente.",
+      const updatedProject = await updateProject(project._id, payload);
+
+      // ✅ Actualiza el padre (ProjectTabs)
+      if (onProjectUpdate) onProjectUpdate(updatedProject);
+
+      addToast({
+        title: "Cambios guardados",
+        description: "Descripción del proyecto actualizada correctamente.",
+        color: "success",
       });
     } catch (error) {
       console.error("Error guardando la descripción:", error);

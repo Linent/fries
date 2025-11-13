@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   Card,
@@ -26,11 +26,12 @@ import {
 export default function PoblacionTab({
   project,
   editable,
+  onProjectUpdate,
 }: {
   project: any;
   editable: boolean;
+  onProjectUpdate?: (updatedProject: any) => void;
 }) {
-  // ✅ Estado inicial seguro: evita undefined
   const [populations, setPopulations] = useState({
     ciclo_vital: project?.populations?.ciclo_vital || [],
     condicion: project?.populations?.condicion || [],
@@ -41,24 +42,41 @@ export default function PoblacionTab({
     "ciclo_vital" | "condicion" | "grupo" | null
   >(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState<string | null>(null);
 
-  // ➕ Agregar población
-  const handleAdd = (
+  // 🧠 Si el padre se actualiza (por ejemplo, desde otra tab), refrescar datos
+  useEffect(() => {
+    if (project?.populations) {
+      setPopulations({
+        ciclo_vital: project.populations.ciclo_vital || [],
+        condicion: project.populations.condicion || [],
+        grupo: project.populations.grupo || [],
+      });
+    }
+  }, [project]);
+
+  // ➕ Agregar población (solo local)
+  const handleAdd = async (
     type: "ciclo_vital" | "condicion" | "grupo",
     poblacion: { name: string; numberOfPeople: number }
   ) => {
-    const updated = {
-      ...populations,
-      [type]: [...(populations[type] || []), poblacion],
-    };
-    setPopulations(updated);
-
-    setAlert("✅ Población agregada correctamente.");
-    setTimeout(() => setAlert(null), 3000);
+    setLoading(true);
+    try {
+      await new Promise((res) => setTimeout(res, 300)); // pequeño delay visual
+      const updated = {
+        ...populations,
+        [type]: [...(populations[type] || []), poblacion],
+      };
+      setPopulations(updated);
+      setAlert("✅ Población agregada localmente (no guardada).");
+      setTimeout(() => setAlert(null), 2500);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 🗑️ Eliminar población
+  // 🗑️ Eliminar población (solo local)
   const handleDelete = (
     type: "ciclo_vital" | "condicion" | "grupo",
     index: number
@@ -71,22 +89,26 @@ export default function PoblacionTab({
 
     addToast({
       title: "Población eliminada",
-      description: "El registro fue eliminado correctamente.",
-      color: "danger",
+      description: "El registro fue eliminado localmente (no guardado).",
+      color: "warning",
     });
   };
 
-  // 💾 Guardar cambios
+  // 💾 Guardar cambios (y refrescar el padre)
   const handleSave = async () => {
     try {
       setSaving(true);
-      await updateProject(project._id, { populations });
+      const updatedProject = await updateProject(project._id, { populations });
       addToast({
         title: "Cambios guardados",
         description: "Las poblaciones fueron actualizadas correctamente.",
         color: "success",
       });
+
+      // 🧩 Notificar al padre que el proyecto cambió
+      if (onProjectUpdate) onProjectUpdate(updatedProject);
     } catch (error) {
+      console.error("Error al guardar poblaciones:", error);
       addToast({
         title: "Error al guardar",
         description: "Ocurrió un error al actualizar las poblaciones.",
@@ -97,7 +119,12 @@ export default function PoblacionTab({
     }
   };
 
-  // 📋 Render de tabla genérica con columnas fijas (previene error isRowHeader)
+  const renderSpinner = (text: string) => (
+    <div className="flex flex-col items-center justify-center py-16">
+      <Spinner color="danger" size="lg" label={text} labelColor="danger" />
+    </div>
+  );
+
   const renderTable = (
     title: string,
     type: "ciclo_vital" | "condicion" | "grupo",
@@ -124,7 +151,7 @@ export default function PoblacionTab({
           <TableBody>
             {populations[type]?.length > 0 ? (
               populations[type].map((p: any, index: number) => (
-                <TableRow key={index}>
+                <TableRow key={`${type}-${index}`}>
                   <TableCell>
                     {options.find((o) => o.value === p.name)?.label || p.name}
                   </TableCell>
@@ -147,10 +174,7 @@ export default function PoblacionTab({
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={3}
-                  className="text-center text-gray-400 italic"
-                >
+                <TableCell colSpan={3} className="text-center text-gray-400 italic">
                   No hay poblaciones registradas
                 </TableCell>
               </TableRow>
@@ -169,28 +193,25 @@ export default function PoblacionTab({
         </Alert>
       )}
 
-      {/* Tablas */}
-      {renderTable(
-        "Población por ciclo vital",
-        "ciclo_vital",
-        poblacionCicloVital
-      )}
-      {renderTable("Población por condición", "condicion", poblacionCondicion)}
-      {renderTable("Población por grupo", "grupo", poblacionGrupo)}
+      {loading
+        ? renderSpinner("Agregando población...")
+        : saving
+        ? renderSpinner("Guardando cambios...")
+        : (
+          <>
+            {renderTable("Población por ciclo vital", "ciclo_vital", poblacionCicloVital)}
+            {renderTable("Población por condición", "condicion", poblacionCondicion)}
+            {renderTable("Población por grupo", "grupo", poblacionGrupo)}
 
-      {/* Botón Guardar */}
-      {editable && (
-        <div className="flex justify-end mt-6">
-          <Button
-            color="danger"
-            onPress={handleSave}
-            isLoading={saving}
-            spinner={<Spinner color="white" size="sm" />}
-          >
-            Guardar
-          </Button>
-        </div>
-      )}
+            {editable && (
+              <div className="flex justify-end mt-6">
+                <Button color="danger" onPress={handleSave}>
+                  Guardar
+                </Button>
+              </div>
+            )}
+          </>
+        )}
 
       {/* Modales */}
       <PoblacionModal
@@ -201,7 +222,6 @@ export default function PoblacionTab({
         onClose={() => setActiveModal(null)}
         onSave={(p) => handleAdd("ciclo_vital", p)}
       />
-
       <PoblacionModal
         title="Agregar población por condición"
         options={poblacionCondicion}
@@ -210,7 +230,6 @@ export default function PoblacionTab({
         onClose={() => setActiveModal(null)}
         onSave={(p) => handleAdd("condicion", p)}
       />
-
       <PoblacionModal
         title="Agregar población por grupo"
         options={poblacionGrupo}

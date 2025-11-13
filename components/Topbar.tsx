@@ -10,14 +10,19 @@ import {
   Breadcrumbs,
   BreadcrumbItem,
 } from "@heroui/react";
+import { Menu } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { routeNames } from "@/types";
-import { getProjectById } from "@/services/proyectServices"; // asegúrate de que sea el nombre correcto
+import { getProjectById } from "@/services/proyectServices";
 
-export default function Topbar() {
+type TopbarProps = {
+  toggleSidebar: () => void; // 👈 función para abrir/cerrar el sidebar
+};
+
+export default function Topbar({ toggleSidebar }: TopbarProps) {
   const router = useRouter();
-  const pathname = usePathname(); // puede ser null durante SSR
+  const pathname = usePathname();
   const [userName, setUserName] = useState<string | null>(null);
   const [projectName, setProjectName] = useState<string | null>(null);
 
@@ -31,15 +36,13 @@ export default function Topbar() {
 
   // 🧭 Si estamos en /extension/[id], obtener el título del proyecto
   useEffect(() => {
-    if (!pathname) return; // ⚡ Evitar error si pathname es null
+    if (!pathname) return;
 
     const match = pathname.match(/extension\/([a-f0-9]{24})/);
     if (match && match[1]) {
       const projectId = match[1];
       getProjectById(projectId)
-        .then((data) => {
-          setProjectName("Detalle del proyecto");
-        })
+        .then(() => setProjectName("Detalle del proyecto"))
         .catch(() => setProjectName("Detalle del proyecto"));
     } else {
       setProjectName(null);
@@ -76,26 +79,36 @@ export default function Topbar() {
 
   return (
     <HeroUINavbar
-      className="flex items-center justify-between bg-white shadow px-6 py-3"
+      className="flex items-center justify-between bg-white shadow px-4 py-3 md:px-6 w-full"
       maxWidth="full"
       position="sticky"
     >
-      {/* 🧭 Breadcrumb dinámico */}
-      <Breadcrumbs>
-        {breadcrumbs.length > 0 ? (
-          breadcrumbs.map((bc) => (
-            <BreadcrumbItem key={bc.href} href={bc.href}>
-              {bc.label}
-            </BreadcrumbItem>
-          ))
-        ) : (
-          <BreadcrumbItem>Inicio</BreadcrumbItem>
-        )}
-      </Breadcrumbs>
+      <div className="flex items-center gap-4">
+        {/* 🔹 Botón hamburguesa (visible solo en móviles) */}
+        <button
+          onClick={toggleSidebar}
+          className="md:hidden text-gray-700 hover:text-red-600 transition-colors"
+        >
+          <Menu size={22} />
+        </button>
+
+        {/* 🧭 Breadcrumb dinámico */}
+        <Breadcrumbs>
+          {breadcrumbs.length > 0 ? (
+            breadcrumbs.map((bc) => (
+              <BreadcrumbItem key={bc.href} href={bc.href}>
+                {bc.label}
+              </BreadcrumbItem>
+            ))
+          ) : (
+            <BreadcrumbItem>Inicio</BreadcrumbItem>
+          )}
+        </Breadcrumbs>
+      </div>
 
       {/* 👤 Menú de usuario */}
       <div className="flex items-center gap-3">
-        <span className="font-medium text-gray-700">
+        <span className="font-medium text-gray-700 hidden sm:block">
           {userName || "Usuario"}
         </span>
 
@@ -104,7 +117,7 @@ export default function Topbar() {
             <Avatar
               isBordered
               as="button"
-              className="transition-transform"
+              className="transition-transform cursor-pointer"
               name={userName || "U"}
               size="sm"
               src="https://i.pravatar.cc/150?u=a042581f4e29026704d"

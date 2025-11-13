@@ -82,3 +82,45 @@ export const updateProjectStatus = async (id: string, status: string) => {
     );
   }
 };
+
+export const uploadProjectDocument = async (
+  projectId: string,
+  file: File,
+  name: string
+): Promise<any> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("name", name);
+
+  const { data } = await api.post(`${projectsPath}/${projectId}/documents/upload`, formData, {
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return data;
+};
+
+/**
+ * 📂 Obtener documentos del proyecto
+ */
+export const getProjectDocuments = async (projectId: string): Promise<any[]> => {
+  const { data } = await api.get(`${projectsPath}/${projectId}/documents`, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+};
+
+/**
+ * 🗑️ Eliminar documento
+ */
+export const deleteProjectDocument = async (
+  projectId: string,
+  documentId: string
+): Promise<any> => {
+  const { data } = await api.delete(`${projectsPath}/${projectId}/documents/${documentId}`, {
+    headers: getAuthHeaders(),
+  });
+  return data;
+};

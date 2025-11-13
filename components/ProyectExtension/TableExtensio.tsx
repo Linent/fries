@@ -21,6 +21,9 @@ import {
   Pagination,
   DateRangePicker,
   Alert,
+  // MODIFICADO: Importa SortDescriptor y Selection para tipado
+  SortDescriptor,
+  Selection,
 } from "@heroui/react";
 import { Spinner } from "@heroui/spinner";
 import ProjectModal from "@/components/ProyectExtension/ProjectModal";
@@ -38,7 +41,7 @@ import { getTokenPayload } from "@/utils/auth";
 import { projectStatusMap, Project, ProjectsTableProps } from "@/types";
 
 // ──────────────────────────────────────────────────────────────
-// Helpers de permisos
+// Helpers de permisos (Sin cambios)
 // ──────────────────────────────────────────────────────────────
 const canEditProject = (project: Project, role?: string, userId?: string) => {
   if (!role) return false;
@@ -56,10 +59,25 @@ const canEditProject = (project: Project, role?: string, userId?: string) => {
       (project as any)?.createdBy === userId;
     return owner && project.status === "en_formulacion";
   }
-
-  // Otros roles (director/decano/vicerrector) no editan desde aquí
   return false;
 };
+
+// ──────────────────────────────────────────────────────────────
+// Constantes para filtros
+// ──────────────────────────────────────────────────────────────
+// Asume que projectStatusMap está definido en @/types
+const statusOptions = Object.entries(projectStatusMap).map(
+  ([key, { label }]) => ({
+    key,
+    label,
+  })
+);
+
+const projectTypeOptions = [
+  { key: "Remunerado", label: "Remunerado" },
+  { key: "Solidario", label: "Solidario" },
+  // Añade más tipos si es necesario
+];
 
 // ──────────────────────────────────────────────────────────────
 // Componente principal
@@ -74,10 +92,23 @@ export default function ProjectsTableAdvanced({
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [filterValue, setFilterValue] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [sortKey, setSortKey] = useState<"title" | "createdAt">("createdAt");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [dateRange, setDateRange] = useState<{ start?: Date; end?: Date }>({});
   const [projectList, setProjectList] = useState<Project[]>(projects);
+  
+  // ------------------------------------------------------------
+  // NUEVO: Estados para los filtros de Dropdown
+  // ------------------------------------------------------------
+  const [statusFilter, setStatusFilter] = useState<Selection>(new Set([]));
+  const [typeFilter, setTypeFilter] = useState<Selection>(new Set([]));
+
+  // ------------------------------------------------------------
+  // MODIFICADO: Estado unificado para el ordenamiento
+  // ------------------------------------------------------------
+  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+    column: "createdAt",
+    direction: "descending",
+  });
+
   const [message, setMessage] = useState<{
     type: "success" | "danger";
     text: string;
@@ -103,10 +134,13 @@ export default function ProjectsTableAdvanced({
     [projectList]
   );
 
-  // 🔍 Filtrado y orden
+  // ------------------------------------------------------------
+  // MODIFICADO: `filteredProjects` ahora solo filtra, no ordena.
+  // ------------------------------------------------------------
   const filteredProjects = useMemo(() => {
     let data = [...sanitizedProjects];
 
+    // Filtro de texto
     if (filterValue) {
       const q = filterValue.toLowerCase();
       data = data.filter(
@@ -115,6 +149,7 @@ export default function ProjectsTableAdvanced({
       );
     }
 
+    // Filtro de rango de fechas
     if (dateRange.start && dateRange.end) {
       data = data.filter((p) => {
         const d = new Date(p.createdAt);
@@ -122,25 +157,62 @@ export default function ProjectsTableAdvanced({
       });
     }
 
-    data.sort((a, b) => {
-      if (sortKey === "title") {
-        return sortOrder === "asc"
-          ? a.title.localeCompare(b.title)
-          : b.title.localeCompare(a.title);
-      }
-      return sortOrder === "asc"
-        ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+    // NUEVO: Filtro por Estado
+    if (statusFilter !== "all" && statusFilter.size > 0) {
+      data = data.filter((p) => statusFilter.has(p.status));
+    }
+
+    // NUEVO: Filtro por Tipo de Proyecto (asumiendo que el dato existe)
+    if (typeFilter !== "all" && typeFilter.size > 0) {
+      data = data.filter((p) => typeFilter.has((p as any).typeProject));
+    }
 
     return data;
-  }, [filterValue, dateRange, sortKey, sortOrder, sanitizedProjects]);
+  }, [filterValue, dateRange, statusFilter, typeFilter, sanitizedProjects]);
 
+  // ------------------------------------------------------------
+  // NUEVO: `sortedItems` se encarga del ordenamiento.
+  // ------------------------------------------------------------
+  const sortedItems = useMemo(() => {
+    return [...filteredProjects].sort((a, b) => {
+      const key = sortDescriptor.column as keyof Project | "faculty";
+      let cmp: number;
+
+      let first: any;
+      let second: any;
+
+      // Manejo especial para 'faculty' que es un objeto anidado
+      if (key === "faculty") {
+        first = (a as any).faculty?.name || "";
+        second = (b as any).faculty?.name || "";
+        cmp = first.localeCompare(second);
+      } else {
+        first = (a as any)[key];
+        second = (b as any)[key];
+
+        if (key === "createdAt") {
+          cmp = new Date(first).getTime() - new Date(second).getTime();
+        } else {
+          // Ordenamiento genérico para texto/números
+          cmp = (first || "") < (second || "") ? -1 : 1;
+          if (typeof first === "string" && typeof second === "string") {
+            cmp = first.localeCompare(second);
+          }
+        }
+      }
+
+      return sortDescriptor.direction === "descending" ? -cmp : cmp;
+    });
+  }, [filteredProjects, sortDescriptor]);
+
+  // ------------------------------------------------------------
+  // MODIFICADO: Paginación basada en `sortedItems` y `filteredProjects`
+  // ------------------------------------------------------------
   const pages = Math.ceil(filteredProjects.length / rowsPerPage);
   const start = (page - 1) * rowsPerPage;
-  const items = filteredProjects.slice(start, start + rowsPerPage);
+  const items = sortedItems.slice(start, start + rowsPerPage);
 
-  // 🎨 Estado visual
+  // 🎨 Estado visual (Sin cambios)
   const renderStatus = (status: string) => {
     const s = projectStatusMap[status] || {
       label: status,
@@ -153,74 +225,129 @@ export default function ProjectsTableAdvanced({
     );
   };
 
-  // 📄 Exportar Excel
+  // 📄 Exportar (Sin cambios, pero podrías querer exportar `filteredProjects` en lugar de `projectList`)
   const handleExportExcel = () => {
+
     if (!projectList.length) {
+
       setMessage({ type: "danger", text: "No hay datos para exportar." });
+
       return;
+
     }
+
+
 
     const data = projectList.map((p) => ({
+
       Código: p.code || "",
+
       Título: p.title || "",
+
       Estado: projectStatusMap[p.status]?.label || p.status,
+
       Facultad: (p as any).faculty?.name || "Sin facultad",
+
       FechaCreación: new Date(p.createdAt).toLocaleString("es-CO"),
+
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Proyectos");
-    XLSX.writeFile(workbook, "proyectos-extension.xlsx");
-  };
 
-  // 📄 Exportar PDF
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Proyectos");
+
+    XLSX.writeFile(workbook, "proyectos-extension.xlsx");
+
+  };
   const handleExportPDF = () => {
+
     if (!projectList.length) {
+
       setMessage({ type: "danger", text: "No hay datos para exportar." });
+
       return;
+
     }
 
+
+
     const doc = new jsPDF({
+
       orientation: "landscape",
+
       unit: "pt",
+
       format: "A4",
+
     });
+
     doc.setFontSize(14);
+
     doc.text("Reporte de Proyectos de Extensión", 40, 40);
+
     doc.setFontSize(10);
+
     const username = (user as any)?.name || "Usuario";
+
     const date = new Date().toLocaleString("es-CO");
+
     doc.text(`Generado por: ${username}`, 40, 55);
+
     doc.text(`Fecha: ${date}`, 40, 70);
 
+
+
     const body = projectList.map((p) => [
+
       p.code || "",
+
       p.title || "",
+
       projectStatusMap[p.status]?.label || p.status,
+
       (p as any).faculty?.name || "Sin facultad",
+
       new Date(p.createdAt).toLocaleDateString("es-CO"),
+
     ]);
 
+
+
     autoTable(doc, {
+
       startY: 90,
+
       head: [["Código", "Título", "Estado", "Facultad", "Fecha"]],
+
       body,
+
       styles: { fontSize: 8, cellPadding: 3 },
+
       headStyles: { fillColor: [200, 0, 0], textColor: [255, 255, 255] },
+
       alternateRowStyles: { fillColor: [245, 245, 245] },
+
       margin: { left: 40, right: 40 },
+
     });
+
     doc.save("proyectos-extension.pdf");
+
   };
 
-  // 🆕 Nuevo proyecto desde modal
+  // 🆕 Nuevo proyecto desde modal (Sin cambios)
   const handleCreateProject = (created: Project) => {
     setProjectList((prev) => [created, ...prev]);
     setMessage({ type: "success", text: "Proyecto creado exitosamente." });
   };
 
-  // ⚙️ Render de celdas
+  // ------------------------------------------------------------
+  // MODIFICADO: `renderCell` con el nuevo `typeProject`
+  // ------------------------------------------------------------
   const renderCell = useCallback(
     (project: Project, columnKey: string) => {
       switch (columnKey) {
@@ -228,6 +355,9 @@ export default function ProjectsTableAdvanced({
           return <p className="font-medium">{project.code}</p>;
         case "title":
           return <p className="font-medium">{project.title}</p>;
+        // NUEVO: Render para el tipo de proyecto
+        case "typeProject":
+          return <p>{(project as any).typeProject || "No definido"}</p>;
         case "status":
           return renderStatus(project.status);
         case "faculty":
@@ -254,21 +384,19 @@ export default function ProjectsTableAdvanced({
                     <VerticalDotsIcon className="text-default-300" />
                   </Button>
                 </DropdownTrigger>
-
                 <DropdownMenu>
-                  {/* Acción principal */}
                   <DropdownItem
                     key="main"
                     onPress={() =>
                       router.push(
-                        `/extension/${projectId}?mode=${editable ? "edit" : "view"}`
+                        `/extension/${projectId}?mode=${
+                          editable ? "edit" : "view"
+                        }`
                       )
                     }
                   >
                     {editable ? "Editar" : "Ver detalle"}
                   </DropdownItem>
-
-                  {/* Solo mostrar “Intentar editar” si es privilegiado y no editable */}
                   {isPrivileged && !editable ? (
                     <DropdownItem
                       key="edit-force"
@@ -292,10 +420,13 @@ export default function ProjectsTableAdvanced({
     [role, userId, isPrivileged, router]
   );
 
-  // 🔝 Contenido superior
+  // ------------------------------------------------------------
+  // MODIFICADO: `topContent` con los nuevos filtros
+  // ------------------------------------------------------------
   const topContent = (
     <div className="flex flex-col gap-3 mb-4">
       <div className="flex flex-wrap gap-3 justify-between items-center">
+        {/* --- Fila 1: Búsqueda y Fecha --- */}
         <Input
           isClearable
           placeholder="Buscar por código o título..."
@@ -305,7 +436,6 @@ export default function ProjectsTableAdvanced({
           onValueChange={setFilterValue}
           onClear={() => setFilterValue("")}
         />
-
         <DateRangePicker
           className="max-w-xs"
           label="Filtrar por fechas"
@@ -316,23 +446,68 @@ export default function ProjectsTableAdvanced({
             })
           }
         />
+      </div>
 
+      <div className="flex flex-wrap gap-2 justify-between items-center">
+        {/* --- Fila 2: Filtros Dropdown --- */}
         <div className="flex gap-2">
-          <Button
-            color="default"
+          <Dropdown>
+            <DropdownTrigger>
+              <Button variant="flat" endContent={<ChevronDownIcon />}>
+                Estado
+                {statusFilter !== "all" && statusFilter.size > 0 && ` (${statusFilter.size})`}
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu
+              aria-label="Filtrar por estado"
+              selectionMode="multiple"
+              selectedKeys={statusFilter}
+              onSelectionChange={setStatusFilter}
+            >
+              {statusOptions.map((status) => (
+                <DropdownItem key={status.key}>{status.label}</DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
+
+          <Dropdown>
+            <DropdownTrigger>
+              <Button variant="flat" endContent={<ChevronDownIcon />}>
+                Tipo
+                {typeFilter !== "all" && typeFilter.size > 0 && ` (${typeFilter.size})`}
+              </Button>
+            </DropdownTrigger>
+            <DropdownMenu
+              aria-label="Filtrar por tipo de proyecto"
+              selectionMode="multiple"
+              selectedKeys={typeFilter}
+              onSelectionChange={setTypeFilter}
+            >
+              {projectTypeOptions.map((type) => (
+                <DropdownItem key={type.key}>{type.label}</DropdownItem>
+              ))}
+            </DropdownMenu>
+          </Dropdown>
+
+           <Button
+             color="default"
             variant="flat"
             startContent={<RefreshCcwIcon />}
             onPress={() => {
               setFilterValue("");
               setDateRange({});
-              setSortKey("createdAt");
-              setSortOrder("desc");
+              setStatusFilter(new Set([]));
+              setTypeFilter(new Set([]));
+              setSortDescriptor({ column: "createdAt", direction: "descending" });
               setMessage(null);
             }}
           >
             Limpiar filtros
           </Button>
+        </div>
 
+        {/* --- Fila 2: Botones de Acción --- */}
+        <div className="flex gap-2">
           {isPrivileged && (
             <>
               <Button
@@ -343,7 +518,6 @@ export default function ProjectsTableAdvanced({
               >
                 Subir CSV/XLSX
               </Button>
-
               <Dropdown>
                 <DropdownTrigger>
                   <Button
@@ -367,13 +541,15 @@ export default function ProjectsTableAdvanced({
             </>
           )}
 
-          <Button
-            color="primary"
-            endContent={<PlusIcon />}
-            onPress={() => setIsModalOpen(true)}
-          >
-            Nuevo proyecto
-          </Button>
+          {["administrador", "fries", "formulador"].includes(role || "") && (
+            <Button
+              color="primary"
+              endContent={<PlusIcon />}
+              onPress={() => setIsModalOpen(true)}
+            >
+              Nuevo proyecto
+            </Button>
+          )}
         </div>
       </div>
 
@@ -384,11 +560,15 @@ export default function ProjectsTableAdvanced({
       )}
 
       <div className="flex justify-end text-sm text-gray-500">
-        Mostrando {items.length} de {sanitizedProjects.length} proyectos
+        {/* MODIFICADO: Muestra el total de items filtrados */}
+        Mostrando {items.length} de {filteredProjects.length} proyectos
       </div>
     </div>
   );
 
+  // ------------------------------------------------------------
+  // `bottomContent` (Sin cambios)
+  // ------------------------------------------------------------
   const bottomContent = (
     <div className="flex justify-between items-center py-2 px-2">
       <Pagination
@@ -417,19 +597,38 @@ export default function ProjectsTableAdvanced({
 
   return (
     <>
+      {/* ------------------------------------------------------------ */}
+      {/* MODIFICADO: Table ahora usa sortDescriptor y onSortChange */}
+      {/* ------------------------------------------------------------ */}
       <Table
         aria-label="Tabla avanzada de proyectos de extensión"
         topContent={topContent}
         bottomContent={bottomContent}
         bottomContentPlacement="outside"
         selectionMode="none"
+        sortDescriptor={sortDescriptor}
+        onSortChange={setSortDescriptor}
       >
         <TableHeader>
-          <TableColumn key="code">Código</TableColumn>
-          <TableColumn key="title">Título</TableColumn>
-          <TableColumn key="faculty">Facultad</TableColumn>
-          <TableColumn key="status">Estado</TableColumn>
-          <TableColumn key="createdAt">Fecha</TableColumn>
+          {/* MODIFICADO: Columnas con `allowsSorting` */}
+          <TableColumn key="code" allowsSorting>
+            Código
+          </TableColumn>
+          <TableColumn key="typeProject" allowsSorting>
+            Tipo de proyecto
+          </TableColumn>
+          <TableColumn key="title" allowsSorting>
+            Título
+          </TableColumn>
+          <TableColumn key="faculty" allowsSorting>
+            Facultad
+          </TableColumn>
+          <TableColumn key="status" allowsSorting>
+            Estado
+          </TableColumn>
+          <TableColumn key="createdAt" allowsSorting>
+            Fecha
+          </TableColumn>
           <TableColumn key="actions" align="center">
             Acciones
           </TableColumn>
@@ -453,7 +652,7 @@ export default function ProjectsTableAdvanced({
         </TableBody>
       </Table>
 
-      {/* Modal para crear proyecto */}
+      {/* Modal para crear proyecto (Sin cambios) */}
       <ProjectModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

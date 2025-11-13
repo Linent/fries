@@ -8,6 +8,7 @@ import IntegrantesTab from "./tabs/Integrantes/IntegrantesTab";
 import DescripcionTab from "./tabs/Descripcion/DescripcionTab";
 import PoblacionTab from "./tabs/Poblacion/PoblacionTab";
 import ResultadosImpactosTab from "./tabs/ResultadosImpactosTab/ResultadosImpactosTab";
+import DocumentosTab from "./tabs/Documentos/DocumentosTab";
 
 export default function ProjectTabs({
   project: initialProject,
@@ -16,8 +17,15 @@ export default function ProjectTabs({
   project: any;
   editable: boolean;
 }) {
-  // ✅ Estado local del proyecto
+  // ✅ Estado local del proyecto (centralizado)
   const [project, setProject] = useState(initialProject);
+
+  // 🔁 Función global para actualizar el proyecto desde cualquier tab
+  const handleProjectUpdate = (updatedProject: any) => {
+    if (updatedProject) {
+      setProject(updatedProject);
+    }
+  };
 
   return (
     <Tabs variant="solid" color="danger">
@@ -31,20 +39,33 @@ export default function ProjectTabs({
       </Tab>
 
       <Tab key="description" title="Descripción">
-        <DescripcionTab project={project} editable={editable} />
+        {/* 🔗 Ahora DescripcionTab puede actualizar el padre */}
+        <DescripcionTab
+          project={project}
+          editable={editable}
+          onProjectUpdate={handleProjectUpdate}
+        />
       </Tab>
 
       <Tab key="population" title="Población">
-        <PoblacionTab project={project} editable={editable} />
+        {/* 🔗 PoblacionTab también actualiza el padre */}
+        <PoblacionTab
+          project={project}
+          editable={editable}
+          onProjectUpdate={handleProjectUpdate}
+        />
       </Tab>
 
       <Tab key="results" title="Resultados esperados">
-        {/* ✅ Pasamos función para actualizar el proyecto */}
+        {/* 🔗 ResultadosImpactosTab también lo hace */}
         <ResultadosImpactosTab
           project={project}
           editable={editable}
-          onProjectUpdate={setProject}
+          onProjectUpdate={handleProjectUpdate}
         />
+      </Tab>
+      <Tab key="documents" title="Documentos">
+        <DocumentosTab project={project} editable={editable} />
       </Tab>
     </Tabs>
   );

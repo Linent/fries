@@ -27,15 +27,12 @@ export default function ResultadosImpactosTab({
   editable: boolean;
   onProjectUpdate?: (updatedProject: any) => void;
 }) {
-  // Estado inicial seguro
   const [data, setData] = useState({
     results: project?.results || [],
     impacts: project?.impacts || [],
   });
 
-  const [activeModal, setActiveModal] = useState<"result" | "impact" | null>(
-    null
-  );
+  const [activeModal, setActiveModal] = useState<"result" | "impact" | null>(null);
   const [saving, setSaving] = useState(false);
   const [alert, setAlert] = useState<string | null>(null);
 
@@ -81,15 +78,13 @@ export default function ResultadosImpactosTab({
       setSaving(true);
       const updatedProject = await updateProject(project._id, data);
 
-      // ✅ Si el backend devuelve el proyecto actualizado, actualiza el padre
       if (onProjectUpdate && updatedProject) {
         onProjectUpdate(updatedProject);
       }
 
       addToast({
         title: "Cambios guardados",
-        description:
-          "Los resultados e impactos fueron actualizados correctamente.",
+        description: "Los resultados e impactos fueron actualizados correctamente.",
         color: "success",
       });
     } catch (error) {
@@ -103,7 +98,7 @@ export default function ResultadosImpactosTab({
     }
   };
 
-  // 📋 Tabla de resultados
+  // 📋 Tablas
   const renderResultsTable = () => (
     <Card className="mb-6 shadow-sm border border-gray-100">
       <CardBody>
@@ -153,10 +148,7 @@ export default function ResultadosImpactosTab({
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-center text-gray-400 italic"
-                >
+                <TableCell colSpan={5} className="text-center text-gray-400 italic">
                   No hay resultados registrados
                 </TableCell>
               </TableRow>
@@ -167,7 +159,6 @@ export default function ResultadosImpactosTab({
     </Card>
   );
 
-  // 📋 Tabla de impactos
   const renderImpactsTable = () => (
     <Card className="mb-6 shadow-sm border border-gray-100">
       <CardBody>
@@ -217,10 +208,7 @@ export default function ResultadosImpactosTab({
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-center text-gray-400 italic"
-                >
+                <TableCell colSpan={5} className="text-center text-gray-400 italic">
                   No hay impactos registrados
                 </TableCell>
               </TableRow>
@@ -231,6 +219,13 @@ export default function ResultadosImpactosTab({
     </Card>
   );
 
+  // 🌀 Spinner general de guardado
+  const renderSpinner = () => (
+    <div className="flex flex-col items-center justify-center py-12">
+      <Spinner color="danger" label="Guardando cambios..." labelColor="danger" size="lg" />
+    </div>
+  );
+
   return (
     <div className="p-6">
       {alert && (
@@ -239,36 +234,38 @@ export default function ResultadosImpactosTab({
         </Alert>
       )}
 
-      {renderResultsTable()}
-      {renderImpactsTable()}
+      {/* Si está guardando, mostrar spinner */}
+      {saving ? (
+        renderSpinner()
+      ) : (
+        <>
+          {renderResultsTable()}
+          {renderImpactsTable()}
 
-      {editable && (
-        <div className="flex justify-end mt-6">
-          <Button
-            color="danger"
-            onPress={handleSave}
-            isLoading={saving}
-            spinner={<Spinner color="white" size="sm" />}
-          >
-            Guardar
-          </Button>
-        </div>
+          {editable && (
+            <div className="flex justify-end mt-6">
+              <Button color="danger" onPress={handleSave}>
+                Guardar
+              </Button>
+            </div>
+          )}
+
+          {/* Modales */}
+          <ResultadoImpactoModal
+            type="result"
+            isOpen={activeModal === "result"}
+            onClose={() => setActiveModal(null)}
+            onSave={(item: any) => handleAdd("result", item)}
+          />
+
+          <ResultadoImpactoModal
+            type="impact"
+            isOpen={activeModal === "impact"}
+            onClose={() => setActiveModal(null)}
+            onSave={(item: any) => handleAdd("impact", item)}
+          />
+        </>
       )}
-
-      {/* Modales */}
-      <ResultadoImpactoModal
-        type="result"
-        isOpen={activeModal === "result"}
-        onClose={() => setActiveModal(null)}
-        onSave={(item: any) => handleAdd("result", item)}
-      />
-
-      <ResultadoImpactoModal
-        type="impact"
-        isOpen={activeModal === "impact"}
-        onClose={() => setActiveModal(null)}
-        onSave={(item: any) => handleAdd("impact", item)}
-      />
     </div>
   );
 }

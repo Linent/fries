@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { Input, Button, Alert, Select, SelectItem } from "@heroui/react";
+import { useState, useEffect } from "react";
+import { Input, Button, Alert, Select, SelectItem, addToast } from "@heroui/react";
 import { updateProject } from "@/services/proyectServices";
 
 export default function GeneralTab({
   project,
   editable,
+  onProjectUpdate,
 }: {
   project: any;
   editable: boolean;
+  onProjectUpdate?: (updatedProject: any) => void;
 }) {
   const [form, setForm] = useState({
     title: project.title || "",
@@ -22,9 +24,24 @@ export default function GeneralTab({
 
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const projectTypes = ["Remunerado", "Solidarío"];
   const semesterOptions = ["primero", "segundo"];
+
+  // 🔄 Sincroniza con el proyecto global si se actualiza desde otra tab
+  useEffect(() => {
+    if (project) {
+      setForm({
+        title: project.title || "",
+        code: project.code || "",
+        typeProject: project.typeProject || "",
+        totalValue: project.totalValue || 0,
+        year: project.year || "",
+        semester: project.semester || "",
+      });
+    }
+  }, [project]);
 
   const handleChange = (field: string, value: string | number) => {
     setForm({ ...form, [field]: value });
@@ -35,18 +52,34 @@ export default function GeneralTab({
     setMessage(null);
 
     if (!form.title || !form.typeProject || !form.year || !form.semester) {
-      setError(
-        "Por favor completa todos los campos obligatorios marcados con *"
-      );
+      setError("Por favor completa todos los campos obligatorios marcados con *");
       return;
     }
 
     try {
-      await updateProject(project._id, form);
+      setSaving(true);
+      const updatedProject = await updateProject(project._id, form);
+
+      // ✅ Notifica al padre (ProjectTabs)
+      if (onProjectUpdate) onProjectUpdate(updatedProject);
+
+      addToast({
+        title: "Cambios guardados",
+        description: "Los datos del proyecto fueron actualizados correctamente.",
+        color: "success",
+      });
+
       setMessage("Datos actualizados correctamente");
     } catch (err) {
       console.error(err);
       setError("Error al guardar los datos");
+      addToast({
+        title: "Error",
+        description: "Ocurrió un error al actualizar la información.",
+        color: "danger",
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -68,6 +101,7 @@ export default function GeneralTab({
           readOnly={!editable}
           required
         />
+
         <Input label="Código" name="code" value={form.code} readOnly />
 
         <Select
@@ -120,7 +154,12 @@ export default function GeneralTab({
 
       {editable && (
         <div className="flex justify-end mt-4">
-          <Button color="danger" onPress={handleSubmit}>
+          <Button
+            color="danger"
+            onPress={handleSubmit}
+            isLoading={saving}
+            spinner={<span className="animate-spin">⏳</span>}
+          >
             Guardar cambios
           </Button>
         </div>

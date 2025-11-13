@@ -41,11 +41,13 @@ export default function IntegrantesTab({
 
   const [openPicker, setOpenPicker] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
-  const [role, setRole] = useState<"director" | "coautor" | "estudiante" | null>(null);
+  const [role, setRole] = useState<"director" | "coautor" | "estudiante" | null>(
+    null
+  );
 
   const didRun = useRef(false);
 
-  // 🔄 Carga inicial de miembros
+  // 🔄 Carga inicial
   const load = async () => {
     setLoading(true);
     try {
@@ -107,12 +109,12 @@ export default function IntegrantesTab({
     }
   };
 
-  // 🧩 Selección desde el modal (elige existente)
+  // 🧩 Selección desde modal
   const handleSelectUser = async (userId: string) => {
     await handleAdd(userId);
   };
 
-  // 📋 Render de tabla
+  // 📋 Render genérico de tablas (coautores y estudiantes)
   const renderTable = (data: any[] = [], roleName: string) => (
     <Table
       aria-label={roleName}
@@ -127,6 +129,7 @@ export default function IntegrantesTab({
     >
       <TableHeader>
         <TableColumn>Nombre</TableColumn>
+        <TableColumn>Programa académico</TableColumn>
         <TableColumn>Email</TableColumn>
         <TableColumn>Acción</TableColumn>
       </TableHeader>
@@ -138,6 +141,11 @@ export default function IntegrantesTab({
           <TableRow key={u._id}>
             <TableCell>
               {u.firstName} {u.firstLastName}
+            </TableCell>
+            <TableCell>
+              {u.academic_program || (
+                <span className="text-gray-400">—</span>
+              )}
             </TableCell>
             <TableCell>{u.email}</TableCell>
             <TableCell>
