@@ -41,6 +41,20 @@ export function StatusChart({ data }: Props) {
     count: item.count,
   }));
 
+  // --- COMIENZO DE LA SOLUCIÓN ---
+
+  // 1. Crea un array con *todas* las opciones (incluida "Todos")
+  // Usamos useMemo para que este array no se recalcule en cada render
+  const statusOptions = useMemo(() => {
+    const options = [
+      { key: "todos", label: "Todos" },
+      ...Object.entries(STATUS_LABELS).map(([key, label]) => ({ key, label })),
+    ];
+    return options;
+  }, []); // El array de dependencias está vacío porque STATUS_LABELS es una constante
+
+  // --- FIN DE LA SOLUCIÓN ---
+
   return (
     <Card className="h-full">
       <CardHeader className="flex justify-between items-center pb-0">
@@ -49,18 +63,19 @@ export function StatusChart({ data }: Props) {
           <h3 className="font-semibold text-gray-700">Estado de los proyectos</h3>
         </div>
 
+        {/* 2. Modifica el componente Select para usar la prop 'items' */}
         <Select
           size="sm"
           className="max-w-[220px]"
           label="Filtrar por estado"
           selectedKeys={new Set([statusFilter])}
           onChange={(e) => setStatusFilter(e.target.value)}
+          items={statusOptions} // <-- Pasa el array de opciones aquí
         >
-          <SelectItem key="todos">Todos</SelectItem>
-
-          {Object.entries(STATUS_LABELS).map(([key, label]) => (
-            <SelectItem key={key}>{label}</SelectItem>
-          ))}
+          {/* 3. Usa un "render prop" para renderizar cada SelectItem */}
+          {(option) => (
+            <SelectItem key={option.key}>{option.label}</SelectItem>
+          )}
         </Select>
       </CardHeader>
 
