@@ -136,7 +136,7 @@ export default function DescripcionTab({
 
   return (
     <div className="p-6 md:p-10 bg-gray-50 rounded-lg w-full">
-      <Card className="w-full max-w-7xl mx-auto shadow-md border border-gray-100 bg-white transition-all duration-300 hover:shadow-lg">
+      <Card className="w-full mx-auto shadow-md border border-gray-100 bg-white transition-all duration-300 hover:shadow-lg">
         <CardHeader className="pb-3 border-b border-gray-100">
           <h3 className="text-xl font-semibold text-gray-800">
             Descripción del proyecto
