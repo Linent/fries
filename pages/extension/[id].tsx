@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { getProjectById } from "@/services/proyectServices";
 import TabsProject from "@/components/ProyectExtension/ProjectTabs";
 import { Spinner } from "@heroui/react";
@@ -9,37 +9,33 @@ import LayoutDashboard from "@/components/LayoutDashboard";
 
 export default function ProjectDetailPage() {
   const router = useRouter();
+  const params = useParams(); // 👈 MUCHÍSIMO MEJOR
   const searchParams = useSearchParams();
 
-  const [projectId, setProjectId] = useState<string | null>(null);
   const [project, setProject] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [mode, setMode] = useState<"view" | "edit">("view");
 
-  // 🧠 Controla que el useEffect de carga solo se ejecute una vez
   const didRun = useRef(false);
 
-  // 🧭 Obtener ID del proyecto desde la URL
+  const projectId = typeof params?.id === "string" ? params.id : null;
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const path = window.location.pathname;
-    const idFromPath = path.split("/").pop();
-    if (idFromPath) setProjectId(idFromPath);
 
     const modeParam = searchParams?.get("mode");
     setMode(modeParam === "edit" ? "edit" : "view");
   }, [searchParams]);
 
-  // 🔄 Cargar los datos del proyecto una sola vez
+  // 🔄 Obtener proyecto
   useEffect(() => {
     if (!projectId) return;
-    if (didRun.current) return; // ⛔ evita que se ejecute 2 veces
+    if (didRun.current) return;
     didRun.current = true;
 
     const fetchProject = async () => {
-      setLoading(true);
       try {
+        setLoading(true);
         const data = await getProjectById(projectId);
         setProject(data);
       } catch (error) {
@@ -52,7 +48,6 @@ export default function ProjectDetailPage() {
     fetchProject();
   }, [projectId]);
 
-  // 💡 Mostrar spinner mientras carga
   if (loading)
     return (
       <LayoutDashboard>
@@ -62,7 +57,6 @@ export default function ProjectDetailPage() {
       </LayoutDashboard>
     );
 
-  // ❌ Si no existe el proyecto
   if (!project)
     return (
       <LayoutDashboard>
@@ -72,7 +66,6 @@ export default function ProjectDetailPage() {
       </LayoutDashboard>
     );
 
-  // ✅ Render del contenido principal
   return (
     <LayoutDashboard>
       <div className="p-6">
@@ -80,7 +73,6 @@ export default function ProjectDetailPage() {
           {mode === "edit" ? "Editar proyecto" : "Detalle del proyecto"}
         </h1>
 
-        {/* 👇 Tus pestañas principales */}
         <TabsProject project={project} editable={mode === "edit"} />
       </div>
     </LayoutDashboard>

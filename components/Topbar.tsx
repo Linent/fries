@@ -20,28 +20,31 @@ import { getUserById } from "@/services/userServices";
 import { routeNames } from "@/types";
 import { DEFAULT_IMAGE } from "@/types/types";
 import { LogoutIcon } from "./icons";
+
+// 👉 Necesario si quieres mostrar el nombre del proyecto en breadcrumbs
+import { getProjectById } from "@/services/proyectServices";
+
 type TopbarProps = {
-  toggleSidebar: () => void; // 👈 función para abrir/cerrar el sidebar
+  toggleSidebar: () => void;
 };
+
 export default function Topbar({ toggleSidebar }: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
 
   const [userName, setUserName] = useState("");
   const [userImage, setUserImage] = useState(DEFAULT_IMAGE);
-  const [breadcrumbsLabel, setBreadcrumbsLabel] = useState(null);
+  const [projectName, setProjectName] = useState<string | null>(null);
 
-  // 🧩 Decodificar token
-  const tokenUser = getTokenPayload(); // { id, name, role }
+  const tokenUser = getTokenPayload();
 
+  // 📌 Cargar datos del usuario
   useEffect(() => {
     if (!tokenUser?.id) return;
 
     const loadUser = async () => {
       try {
         const user = await getUserById(tokenUser.id);
-
-        // 👉 Si backend retorna profileImage, úsala
         setUserImage(user.profileImage || DEFAULT_IMAGE);
         setUserName(user.name);
       } catch (error) {
@@ -52,12 +55,46 @@ export default function Topbar({ toggleSidebar }: TopbarProps) {
     loadUser();
   }, []);
 
-  // 🧭 Breadcrumbs
-  const segments = pathname.split("/").filter(Boolean);
+  // 📌 Cargar nombre del proyecto si estamos en /extension/[id]
+  useEffect(() => {
+    if (!pathname) return;
+
+    const safePath = pathname ?? "";
+    const parts = safePath.split("/").filter(Boolean);
+
+    if (parts[0] === "extension" && parts[1]) {
+      const projectId = parts[1];
+
+      if (/^[0-9a-fA-F]{24}$/.test(projectId)) {
+        getProjectById(projectId)
+          .then((res) => {
+            if (res?.title) setProjectName(res.title);
+          })
+          .catch(() => {});
+      }
+    }
+  }, [pathname]);
+
+  // 📌 Breadcrumbs seguros (sin errores en Vercel)
+  const safePath = pathname ?? "";
+  const segments = safePath.split("/").filter(Boolean);
+
   const breadcrumbs = segments.map((segment, index) => {
     const href = "/" + segments.slice(0, index + 1).join("/");
+
+    // 🔥 Si estamos en /extension/[id] → reemplazar ID por título del proyecto
+    if (
+      segments[0] === "extension" &&
+      index === 1 &&
+      projectName &&
+      /^[0-9a-fA-F]{24}$/.test(segment)
+    ) {
+      return { href, label: projectName };
+    }
+
     let label =
-      routeNames[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
+      routeNames[segment] ||
+      segment.charAt(0).toUpperCase() + segment.slice(1);
 
     return { href, label };
   });
@@ -82,6 +119,7 @@ export default function Topbar({ toggleSidebar }: TopbarProps) {
           <Menu size={22} />
         </button>
 
+        {/* 🧭 Breadcrumbs */}
         <Breadcrumbs>
           {breadcrumbs.length ? (
             breadcrumbs.map((bc) => (
@@ -109,7 +147,7 @@ export default function Topbar({ toggleSidebar }: TopbarProps) {
               className="cursor-pointer transition-transform"
               size="sm"
               name={userName || "U"}
-              src={userImage} // ← FOTO REAL DEL USUARIO
+              src={userImage}
             />
           </DropdownTrigger>
 
@@ -120,7 +158,11 @@ export default function Topbar({ toggleSidebar }: TopbarProps) {
             >
               Mi perfil
             </DropdownItem>
-            <DropdownItem key="ajustes" isDisabled >Ajustes <em>(proximamente)</em></DropdownItem>
+
+            <DropdownItem key="ajustes" isDisabled>
+              Ajustes <em>(próximamente)</em>
+            </DropdownItem>
+
             <DropdownItem
               key="logout"
               color="danger"
