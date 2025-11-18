@@ -10,72 +10,63 @@ import {
   Breadcrumbs,
   BreadcrumbItem,
 } from "@heroui/react";
+
 import { Menu } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { routeNames } from "@/types";
-import { getProjectById } from "@/services/proyectServices";
 
+import { getTokenPayload } from "@/utils/auth";
+import { getUserById } from "@/services/userServices";
+import { routeNames } from "@/types";
+import { DEFAULT_IMAGE } from "@/types/types";
+import { LogoutIcon } from "./icons";
 type TopbarProps = {
   toggleSidebar: () => void; // 👈 función para abrir/cerrar el sidebar
 };
-
 export default function Topbar({ toggleSidebar }: TopbarProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [userName, setUserName] = useState<string | null>(null);
-  const [projectName, setProjectName] = useState<string | null>(null);
 
-  // 🧭 Cargar nombre del usuario desde localStorage
+  const [userName, setUserName] = useState("");
+  const [userImage, setUserImage] = useState(DEFAULT_IMAGE);
+  const [breadcrumbsLabel, setBreadcrumbsLabel] = useState(null);
+
+  // 🧩 Decodificar token
+  const tokenUser = getTokenPayload(); // { id, name, role }
+
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedName = localStorage.getItem("userName");
-      if (storedName) setUserName(storedName);
-    }
+    if (!tokenUser?.id) return;
+
+    const loadUser = async () => {
+      try {
+        const user = await getUserById(tokenUser.id);
+
+        // 👉 Si backend retorna profileImage, úsala
+        setUserImage(user.profileImage || DEFAULT_IMAGE);
+        setUserName(user.name);
+      } catch (error) {
+        console.error("Error cargando usuario:", error);
+      }
+    };
+
+    loadUser();
   }, []);
 
-  // 🧭 Si estamos en /extension/[id], obtener el título del proyecto
-  useEffect(() => {
-    if (!pathname) return;
-
-    const match = pathname.match(/extension\/([a-f0-9]{24})/);
-    if (match && match[1]) {
-      const projectId = match[1];
-      getProjectById(projectId)
-        .then(() => setProjectName("Detalle del proyecto"))
-        .catch(() => setProjectName("Detalle del proyecto"));
-    } else {
-      setProjectName(null);
-    }
-  }, [pathname]);
-
-  // 🚪 Cerrar sesión
-  const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("token");
-      localStorage.removeItem("userName");
-      localStorage.removeItem("role");
-      router.push("/");
-    }
-  };
-
-  // 🧭 Generar breadcrumbs dinámicos
-  const pathSegments =
-    pathname?.split("/").filter((segment) => segment !== "") || [];
-
-  const breadcrumbs = pathSegments.map((segment, index) => {
-    const href = "/" + pathSegments.slice(0, index + 1).join("/");
-
+  // 🧭 Breadcrumbs
+  const segments = pathname.split("/").filter(Boolean);
+  const breadcrumbs = segments.map((segment, index) => {
+    const href = "/" + segments.slice(0, index + 1).join("/");
     let label =
       routeNames[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
 
-    // 🔹 Si el segmento es un ObjectId, mostrar el nombre del proyecto
-    if (segment.match(/^[a-f0-9]{24}$/)) {
-      label = projectName || "Cargando...";
-    }
-
     return { href, label };
   });
+
+  // 🚪 Logout
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    router.push("/");
+  };
 
   return (
     <HeroUINavbar
@@ -84,17 +75,15 @@ export default function Topbar({ toggleSidebar }: TopbarProps) {
       position="sticky"
     >
       <div className="flex items-center gap-4">
-        {/* 🔹 Botón hamburguesa (visible solo en móviles) */}
         <button
           onClick={toggleSidebar}
-          className="md:hidden text-gray-700 hover:text-red-600 transition-colors"
+          className="md:hidden text-gray-700 hover:text-red-600"
         >
           <Menu size={22} />
         </button>
 
-        {/* 🧭 Breadcrumb dinámico */}
         <Breadcrumbs>
-          {breadcrumbs.length > 0 ? (
+          {breadcrumbs.length ? (
             breadcrumbs.map((bc) => (
               <BreadcrumbItem key={bc.href} href={bc.href}>
                 {bc.label}
@@ -106,7 +95,7 @@ export default function Topbar({ toggleSidebar }: TopbarProps) {
         </Breadcrumbs>
       </div>
 
-      {/* 👤 Menú de usuario */}
+      {/* 👤 Menú usuario */}
       <div className="flex items-center gap-3">
         <span className="font-medium text-gray-700 hidden sm:block">
           {userName || "Usuario"}
@@ -117,16 +106,27 @@ export default function Topbar({ toggleSidebar }: TopbarProps) {
             <Avatar
               isBordered
               as="button"
-              className="transition-transform cursor-pointer"
-              name={userName || "U"}
+              className="cursor-pointer transition-transform"
               size="sm"
-              src="https://i.pravatar.cc/150?u=a042581f4e29026704d"
+              name={userName || "U"}
+              src={userImage} // ← FOTO REAL DEL USUARIO
             />
           </DropdownTrigger>
-          <DropdownMenu aria-label="Perfil de usuario" variant="flat">
-            <DropdownItem key="perfil">Perfil</DropdownItem>
-            <DropdownItem key="ajustes">Ajustes</DropdownItem>
-            <DropdownItem key="logout" color="danger" onPress={handleLogout}>
+
+          <DropdownMenu aria-label="Perfil" variant="flat">
+            <DropdownItem
+              key="perfil"
+              onPress={() => router.push("/user/profile")}
+            >
+              Mi perfil
+            </DropdownItem>
+            <DropdownItem key="ajustes" isDisabled >Ajustes <em>(proximamente)</em></DropdownItem>
+            <DropdownItem
+              key="logout"
+              color="danger"
+              onPress={handleLogout}
+              startContent={<LogoutIcon size={18} />}
+            >
               Cerrar sesión
             </DropdownItem>
           </DropdownMenu>

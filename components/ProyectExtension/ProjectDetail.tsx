@@ -38,7 +38,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
 
   const user = getTokenPayload();
   const role = user?.role || "";
-  const userId = user?._id;
+  const userId = user?.id;
 
   type StatusKey =
     | "en_formulacion"

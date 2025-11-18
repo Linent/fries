@@ -227,117 +227,164 @@ export default function ProjectsTableAdvanced({
 
   // 📄 Exportar (Sin cambios, pero podrías querer exportar `filteredProjects` en lugar de `projectList`)
   const handleExportExcel = () => {
+  if (!projectList.length) {
+    setMessage({ type: "danger", text: "No hay datos para exportar." });
+    setTimeout(() => setMessage(null), 2000);
+    return;
+  }
 
-    if (!projectList.length) {
+  // --- Función para aplanar objetos y arrays ---
+  const flattenField = (value:any) => {
+    if (!value) return "";
 
-      setMessage({ type: "danger", text: "No hay datos para exportar." });
-
-      return;
-
+    // Si es array
+    if (Array.isArray(value)) {
+      return value
+        .map((item) =>
+          typeof item === "object"
+            ? Object.values(item).join(" ")
+            : String(item)
+        )
+        .join(", ");
     }
 
+    // Si es objeto
+    if (typeof value === "object") {
+      return Object.entries(value)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(", ");
+    }
 
-
-    const data = projectList.map((p) => ({
-
-      Código: p.code || "",
-
-      Título: p.title || "",
-
-      Estado: projectStatusMap[p.status]?.label || p.status,
-
-      Facultad: (p as any).faculty?.name || "Sin facultad",
-
-      FechaCreación: new Date(p.createdAt).toLocaleString("es-CO"),
-
-    }));
-
-
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
-
-    const workbook = XLSX.utils.book_new();
-
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Proyectos");
-
-    XLSX.writeFile(workbook, "proyectos-extension.xlsx");
-
+    return value;
   };
+
+  const excelData = projectList.map((p) => ({
+    Código: p.code,
+    Título: p.title,
+    Tipo: p.typeProject,
+    Año: p.year,
+    Semestre: p.semester,
+    Estado: projectStatusMap[p.status]?.label || p.status,
+    Facultad: p.faculty?.name || "Sin facultad",
+
+    // Director del proyecto
+    Director: p?.director
+      ? `${p.director.firstName} ${p.director.firstLastName} (${p.director.email})`
+      : "Sin director",
+
+    // Coautores
+    Coautores: p.coauthors
+      ?.map((c) => `${c.firstName} ${c.firstLastName} (${c.email})`)
+      .join(", ") || "Ninguno",
+
+    // Estudiantes
+    Estudiantes: p.students
+      ?.map((s) => `${s.firstName} ${s.firstLastName} (${s.email})`)
+      .join(", ") || "Ninguno",
+
+    // Poblaciones estructuradas
+    "Ciclo Vital": p.populations?.ciclo_vital
+      ?.map((cv) => `${cv.name}: ${cv.numberOfPeople}`)
+      .join(", ") || "",
+
+    Condición: p.populations?.condicion
+      ?.map((c) => `${c.name}: ${c.numberOfPeople}`)
+      .join(", ") || "",
+
+    Grupo: p.populations?.grupo
+      ?.map((g) => `${g.name}: ${g.numberOfPeople}`)
+      .join(", ") || "",
+
+    // Resultados
+    Resultados: p.results
+      ?.map((r) => `${r.product} - Indicador: ${r.indicator}`)
+      .join(" | ")
+      .trim() || "",
+
+    // Impactos
+    Impactos: p.impacts
+      ?.map((i) => `${i.expectedImpact} (${i.term})`)
+      .join(" | ") || "",
+
+    // Entidades
+    Entidades: p.entity
+      ?.map((e) => `${e.entity?.name} (${e.entity?.typeEntity})`)
+      .join(", ") || "",
+
+    // Documentos
+    Documentos: p.documents
+      ?.map((d) => `${d.name} (${d.type})`)
+      .join(", ") || "",
+
+    Descripción: p.description || "",
+    Justificación: p.justification || "",
+    ObjetivoGeneral: p.objectiveGeneral || "",
+
+    FechaCreación: new Date(p.createdAt).toLocaleString("es-CO"),
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(excelData);
+  const workbook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Proyectos Extensión");
+  XLSX.writeFile(workbook, "proyectos-extension-completo.xlsx");
+
+  setMessage({
+    type: "success",
+    text: "Archivo Excel generado correctamente.",
+  });
+
+  setTimeout(() => setMessage(null), 2000);
+};
+
   const handleExportPDF = () => {
+  if (!projectList.length) {
+    setMessage({ type: "danger", text: "No hay datos para exportar." });
+    setTimeout(() => setMessage(null), 2000);
+    return;
+  }
 
-    if (!projectList.length) {
+  const doc = new jsPDF({
+    orientation: "landscape",
+    unit: "pt",
+    format: "A4",
+  });
 
-      setMessage({ type: "danger", text: "No hay datos para exportar." });
+  doc.setFontSize(14);
+  doc.text("Reporte de Proyectos de Extensión", 40, 40);
 
-      return;
+  const username = (user as any)?.name || "Usuario";
+  const date = new Date().toLocaleString("es-CO");
+  doc.setFontSize(10);
+  doc.text(`Generado por: ${username}`, 40, 55);
+  doc.text(`Fecha: ${date}`, 40, 70);
 
-    }
+  const body = projectList.map((p) => [
+    p.code || "",
+    p.title || "",
+    projectStatusMap[p.status]?.label || p.status,
+    (p as any).faculty?.name || "Sin facultad",
+    new Date(p.createdAt).toLocaleDateString("es-CO"),
+  ]);
 
+  autoTable(doc, {
+    startY: 90,
+    head: [["Código", "Título", "Estado", "Facultad", "Fecha"]],
+    body,
+    styles: { fontSize: 8, cellPadding: 3 },
+    headStyles: { fillColor: [200, 0, 0], textColor: [255, 255, 255] },
+    alternateRowStyles: { fillColor: [245, 245, 245] },
+    margin: { left: 40, right: 40 },
+  });
 
+  doc.save("proyectos-extension.pdf");
 
-    const doc = new jsPDF({
+  setMessage({ type: "success", text: "PDF generado correctamente." });
 
-      orientation: "landscape",
+  // Ocultar después de 2 segundos
+  setTimeout(() => setMessage(null), 2000);
+};
 
-      unit: "pt",
-
-      format: "A4",
-
-    });
-
-    doc.setFontSize(14);
-
-    doc.text("Reporte de Proyectos de Extensión", 40, 40);
-
-    doc.setFontSize(10);
-
-    const username = (user as any)?.name || "Usuario";
-
-    const date = new Date().toLocaleString("es-CO");
-
-    doc.text(`Generado por: ${username}`, 40, 55);
-
-    doc.text(`Fecha: ${date}`, 40, 70);
-
-
-
-    const body = projectList.map((p) => [
-
-      p.code || "",
-
-      p.title || "",
-
-      projectStatusMap[p.status]?.label || p.status,
-
-      (p as any).faculty?.name || "Sin facultad",
-
-      new Date(p.createdAt).toLocaleDateString("es-CO"),
-
-    ]);
-
-
-
-    autoTable(doc, {
-
-      startY: 90,
-
-      head: [["Código", "Título", "Estado", "Facultad", "Fecha"]],
-
-      body,
-
-      styles: { fontSize: 8, cellPadding: 3 },
-
-      headStyles: { fillColor: [200, 0, 0], textColor: [255, 255, 255] },
-
-      alternateRowStyles: { fillColor: [245, 245, 245] },
-
-      margin: { left: 40, right: 40 },
-
-    });
-
-    doc.save("proyectos-extension.pdf");
-
-  };
 
   // 🆕 Nuevo proyecto desde modal (Sin cambios)
   const handleCreateProject = (created: Project) => {

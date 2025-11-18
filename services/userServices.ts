@@ -17,7 +17,7 @@ export const getUsers = async (q?: string, role?: string) => {
   if (q) params.append("q", q);
   if (role) params.append("role", role);
 
-  const url = `${BACKEND_URL}/${UserPath}?${params.toString()}`;
+  const url = `${BACKEND_URL}/${UserPath}/query/?${params.toString()}`;
 
   const response = await api.get(url, { headers: getAuthHeaders() });
   return response.data; // <== Esto devuelve el array directamente
@@ -73,8 +73,26 @@ export const updateUser = async (userId: string, userData: Partial<IUser>) => {
 };
 
 export const deleteUser = async (userId: string) => {
-  const response = await api.delete(`${BACKEND_URL}/${UserPath}/${userId}`, {
+  const response = await api.put(`${BACKEND_URL}/${UserPath}/${userId}`, {
     headers: getAuthHeaders(),
   });
+  return response.data;
+};
+
+export const updateUserProfileImage = async (userId: string, file: File) => {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const response = await api.put(
+    `${BACKEND_URL}/${UserPath}/${userId}/profile-image`,
+    formData,
+    {
+      headers: {
+        ...getAuthHeaders(),
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
   return response.data;
 };

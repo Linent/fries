@@ -7,7 +7,7 @@ const base = `${BACKEND_URL}/project-members`;
 export const getProjectMembers = async (projectId: string) => {
   const url = `${base}/${projectId}`;
   const response = await api.get(url, { headers: getAuthHeaders() });
-  console.log("🔵 getProjectMembers() response:", response.data);
+  
   return response.data;
 };
 

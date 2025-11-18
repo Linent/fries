@@ -83,6 +83,16 @@ export const routeNames: Record<string, string> = {
   faculty: "Facultades",
   entidades: "Entidades",
 };
+export const CHART_COLORS = [
+  "#6366F1", // Indigo
+  "#3B82F6", // Blue
+  "#10B981", // Green
+  "#F59E0B", // Amber
+  "#EF4444", // Red
+  "#8B5CF6", // Purple
+  "#EC4899", // Pink
+  "#06B6D4", // Cyan
+];
 
 // config/projectStatus.ts
 export const projectStatusMap: Record<
@@ -115,6 +125,46 @@ export const projectStatusMap: Record<
   },
 };
 
+export interface ProjectPerson {
+  firstName?: string;
+  firstLastName?: string;
+  email?: string;
+}
+
+export interface PopulationEntry {
+  name?: string;
+  numberOfPeople?: number;
+}
+
+export interface ProjectPopulations {
+  ciclo_vital?: PopulationEntry[];
+  condicion?: PopulationEntry[];
+  grupo?: PopulationEntry[];
+}
+
+export interface ProjectResult {
+  product?: string;
+  indicator?: string;
+}
+
+export interface ProjectImpact {
+  expectedImpact?: string;
+  term?: string;
+}
+
+export interface ProjectEntityRef {
+  entity?: {
+    _id?: string;
+    name?: string;
+    typeEntity?: string;
+  };
+}
+
+export interface ProjectDocument {
+  name?: string;
+  type?: string;
+}
+
 export interface Project {
   _id?: string;
   id?: string;
@@ -122,15 +172,25 @@ export interface Project {
   title: string;
   status: string;
   description?: string;
-  createdAt: string;
+  justification?: string;
+  objectiveGeneral?: string;
+  createdAt: string | Date;
   faculty?: {
-    name: string;
-    code: string;
-  };
-  createdBy?: { _id: string } | string;
-  typeProject?: string;
-  year?: number;
-  semester?: string;
+    name?: string;
+    code?: string;
+  } | null;
+  createdBy?: { _id?: string } | string;
+  typeProject?: "Remunerado" | "Solidario" | string;
+  year?: number | string;
+  semester?: string | number;
+  director?: ProjectPerson | null;
+  coauthors?: ProjectPerson[];
+  students?: ProjectPerson[];
+  populations?: ProjectPopulations;
+  results?: ProjectResult[];
+  impacts?: ProjectImpact[];
+  entity?: ProjectEntityRef[];
+  documents?: ProjectDocument[];
 }
 
 export interface ProjectsTableProps {
@@ -170,6 +230,7 @@ export interface EntityDTO {
   createdAt?: string;
   updatedAt?: string;
 }
+export const DEFAULT_IMAGE= "https://res.cloudinary.com/dhaxrwwio/image/upload/v1747070979/Captura-de-pantalla-2025-05-12-122646_zrk4ft.webp";
 
 export const tipoDocumentoOptions = [
   { label: "Cédula de ciudadanía", value: "CC" },

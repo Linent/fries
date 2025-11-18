@@ -9,6 +9,7 @@ import DescripcionTab from "./tabs/Descripcion/DescripcionTab";
 import PoblacionTab from "./tabs/Poblacion/PoblacionTab";
 import ResultadosImpactosTab from "./tabs/ResultadosImpactosTab/ResultadosImpactosTab";
 import DocumentosTab from "./tabs/Documentos/DocumentosTab";
+import ComentariosTab from "./tabs/Commets/ComentariosTabs";
 
 export default function ProjectTabs({
   project: initialProject,
@@ -66,6 +67,9 @@ export default function ProjectTabs({
       </Tab>
       <Tab key="documents" title="Documentos">
         <DocumentosTab project={project} editable={editable} />
+      </Tab>
+      <Tab key="comments" title="Comentarios">
+        <ComentariosTab editable={editable} project={project} />
       </Tab>
     </Tabs>
   );

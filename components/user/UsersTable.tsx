@@ -33,7 +33,8 @@ import {
   RefreshCcwIcon,
 } from "@/components/icons";
 import { getTokenPayload } from "@/utils/auth";
-import { getUserById } from "@/services/userServices";
+import { deleteUser, getUserById } from "@/services/userServices";
+import UserEditModal from "./UserEditModal";
 
 interface User {
   _id?: string;
@@ -62,6 +63,7 @@ export default function UsersTable({ users, loading, onRefresh }: UsersTableProp
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const user = getTokenPayload();
   const isPrivileged = ["administrador", "fries"].includes(user?.role || "");
@@ -130,7 +132,26 @@ export default function UsersTable({ users, loading, onRefresh }: UsersTableProp
     XLSX.utils.book_append_sheet(workbook, worksheet, "Usuarios");
     XLSX.writeFile(workbook, "usuarios.xlsx");
   };
+  const handleDelete = async (user: User) => {
+  if (user._id === getTokenPayload()?.id) {
+    setMessage({ type: "danger", text: "No puedes eliminar tu propio usuario." });
+    return;
+  }
 
+  const confirmDelete = confirm(`¿Eliminar a ${user.name}?`);
+  if (!confirmDelete) return;
+
+  try {
+    await deleteUser(user._id!);
+    setMessage({ type: "success", text: "Usuario eliminado correctamente." });
+
+    setUserList(prev => prev.filter(u => u._id !== user._id));
+
+    onRefresh?.();
+  } catch (e) {
+    setMessage({ type: "danger", text: "Error al eliminar usuario." });
+  }
+};
   // 📄 Exportar PDF
   const handleExportPDF = () => {
     if (!userList || userList.length === 0) {
@@ -207,14 +228,25 @@ export default function UsersTable({ users, loading, onRefresh }: UsersTableProp
                   >
                     Ver detalles
                   </DropdownItem>
-                  <DropdownItem key="editar" color="primary">
-                    Editar
-                  </DropdownItem>
+                  <DropdownItem
+  key="edit"
+  color="primary"
+  onPress={() => {
+    setSelectedUserId(user._id || null);
+    setIsEditModalOpen(true);
+  }}
+>
+  Editar
+</DropdownItem>
                   {isPrivileged ? (
-                    <DropdownItem key="delete" color="danger">
-                      Eliminar
-                    </DropdownItem>
-                  ) : null}
+  <DropdownItem
+    key="delete"
+    color="danger"
+    onPress={() => handleDelete(user)}
+  >
+    Eliminar
+  </DropdownItem>
+):null}
                 </DropdownMenu>
               </Dropdown>
             </div>
@@ -363,7 +395,12 @@ export default function UsersTable({ users, loading, onRefresh }: UsersTableProp
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={onRefresh}
       />
-
+      <UserEditModal
+  isOpen={isEditModalOpen}
+  onClose={() => setIsEditModalOpen(false)}
+  userId={selectedUserId}
+  onSuccess={onRefresh}
+/>
       <UserViewModal
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}

@@ -22,6 +22,7 @@ import {
   deleteProjectDocument,
 } from "@/services/proyectServices";
 import UploadDocumentModal from "@/components/ProyectExtension/tabs/Documentos/UploadDocumentModal";
+import EditDocumentModal from "./EditDocumentModal";
 
 export default function DocumentosTab({
   project,
@@ -34,9 +35,14 @@ export default function DocumentosTab({
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: "success" | "danger"; text: string } | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<any | null>(null); 
   const didRun = useRef(false);
 
+  const openEditModal = (doc: any) => {
+  setSelectedDoc(doc);
+  setEditModalOpen(true);
+  };
   const loadDocuments = async () => {
     setLoading(true);
     try {
@@ -152,7 +158,17 @@ export default function DocumentosTab({
                       >
                         Ver documento
                       </Button>
-
+                      {editable && (
+                      <Button
+                        size="sm"
+                        color="warning"
+                        variant="flat"
+                        startContent={<UploadIcon size={16} />}
+                        onPress={() => openEditModal(doc)}
+                      >
+                        Editar
+                      </Button>
+                      )}
                       {/* 🔴 Eliminar (solo si editable) */}
                       {editable && (
                         <Button
@@ -180,6 +196,15 @@ export default function DocumentosTab({
         onClose={() => setModalOpen(false)}
         onUpload={handleUpload}
       />
+      {selectedDoc && (
+      <EditDocumentModal
+      isOpen={editModalOpen}
+      onClose={() => setEditModalOpen(false)}
+      projectId={project._id}
+      document={selectedDoc}
+      onUpdated={loadDocuments}
+  />
+)}
     </div>
   );
 }

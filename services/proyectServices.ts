@@ -8,6 +8,7 @@ export const getProjects = async (token: string) => {
     const response = await api.get(`${BACKEND_URL}/${projectsPath}`, {
       headers: getAuthHeaders(),
     });
+    console.log(response);
     return response.data; // Asegúrate de que el backend devuelve un array de proyectos
   } catch (error: any) {
     console.error("Error al obtener los proyectos:", error);
@@ -122,5 +123,74 @@ export const deleteProjectDocument = async (
   const { data } = await api.delete(`${projectsPath}/${projectId}/documents/${documentId}`, {
     headers: getAuthHeaders(),
   });
+  return data;
+};
+
+export const updateProjectDocument = async (
+  projectId: string,
+  documentId: string,
+  payload: { name?: string; file?: File }
+) => {
+  try {
+    const formData = new FormData();
+
+    if (payload.name) formData.append("name", payload.name);
+    if (payload.file) formData.append("file", payload.file);
+
+    const { data } = await api.put(
+      `${projectsPath}/${projectId}/documents/${documentId}`,
+      formData,
+      {
+        headers: {
+          ...getAuthHeaders(),
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    return data;
+  } catch (error: any) {
+    console.error("Error al actualizar documento:", error);
+    throw new Error(
+      error.response?.data?.message || "Error al actualizar documento."
+    );
+  }
+};
+
+export const getProjectComments = async (projectId: string) => {
+  const { data } = await api.get(
+    `${BACKEND_URL}/comments/${projectId}`,
+    { headers: getAuthHeaders() }
+  );
+  return data;
+};
+
+export const addProjectComment = async (
+  projectId: string,
+  text: string,
+  visibleToFormulator = true
+) => {
+  const { data } = await api.post(
+    `${BACKEND_URL}/comments/${projectId}`,
+    { text, visibleToFormulator },
+    { headers: getAuthHeaders() }
+  );
+  return data;
+};
+
+export const updateProjectComment = async (commentId: string, payload: any) => {
+  const { data } = await api.put(
+    `${BACKEND_URL}/comments/edit/${commentId}`,
+    payload,
+    { headers: getAuthHeaders() }
+  );
+  return data;
+};
+
+export const deleteProjectComment = async (commentId: string) => {
+  const { data } = await api.delete(
+    `${BACKEND_URL}/comments/delete/${commentId}`,
+    { headers: getAuthHeaders() }
+  );
   return data;
 };

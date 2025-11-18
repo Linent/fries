@@ -294,3 +294,50 @@ export const PlusCircleIcon = ({ size = 20 }: { size?: number }) => (
     <path d="M12 8v8M8 12h8" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
+export const LogoutIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}) => {
+  return (
+    <svg
+      height={size || height}
+      width={size || width}
+      viewBox="0 0 24 24"
+      fill="none"
+      {...props}
+    >
+      {/* Puerta */}
+      <path
+        d="M3 4C3 2.89543 3.89543 2 5 2H13C14.1046 2 15 2.89543 15 4V7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M15 17V20C15 21.1046 14.1046 22 13 22H5C3.89543 22 3 21.1046 3 20V12"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      {/* Flecha de salida */}
+      <path
+        d="M10 12H21"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="M17 8L21 12L17 16"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
