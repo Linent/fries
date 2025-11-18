@@ -67,14 +67,14 @@ export default function ProjectDetailPage() {
     );
 
   return (
-    <LayoutDashboard>
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4">
-          {mode === "edit" ? "Editar proyecto" : "Detalle del proyecto"}
-        </h1>
+  <LayoutDashboard headerTitle={project.title}>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">
+        {mode === "edit" ? "Editar proyecto" : "Detalle del proyecto"}
+      </h1>
 
-        <TabsProject project={project} editable={mode === "edit"} />
-      </div>
-    </LayoutDashboard>
-  );
+      <TabsProject project={project} editable={mode === "edit"} />
+    </div>
+  </LayoutDashboard>
+);
 }

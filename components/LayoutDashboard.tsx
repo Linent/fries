@@ -1,3 +1,4 @@
+// LayoutDashboard.tsx
 "use client";
 
 import Sidebar from "./Sidebar";
@@ -8,8 +9,10 @@ import { isTokenExpired } from "@/utils/auth";
 
 export default function LayoutDashboard({
   children,
+  headerTitle, // 👈 nuevo prop
 }: {
   children: React.ReactNode;
+  headerTitle?: string; 
 }) {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -19,29 +22,27 @@ export default function LayoutDashboard({
 
     if (token && isTokenExpired()) {
       localStorage.removeItem("token");
-      localStorage.removeItem("role");
       router.push("/");
     }
   }, [router]);
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      {/* 🧱 Sidebar */}
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
-      {/* 🧭 Contenedor principal */}
-      <div
-        className={`flex flex-col flex-1 transition-all duration-300 ${
-          isSidebarOpen ? "md:ml-64" : "md:ml-64"
-        }`}
-      >
-        {/* 🔝 Topbar fijo */}
+      <div className="flex flex-col flex-1 md:ml-64">
+        
+        {/* 🔝 Topbar con título dinámico */}
         <div className="fixed top-0 left-0 w-full z-30 md:pl-64 bg-white">
-          <Topbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+          <Topbar
+            toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+            headerTitle={headerTitle}
+          />
         </div>
 
-        {/* 📦 Contenido principal */}
-        <main className="flex-1 p-6 mt-20 md:mt-24 overflow-y-auto">{children}</main>
+        <main className="flex-1 p-6 mt-20 md:mt-24 overflow-y-auto">
+          {children}
+        </main>
       </div>
     </div>
   );

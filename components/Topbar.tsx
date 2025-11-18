@@ -1,3 +1,4 @@
+// Topbar.tsx
 "use client";
 
 import {
@@ -21,96 +22,61 @@ import { routeNames } from "@/types";
 import { DEFAULT_IMAGE } from "@/types/types";
 import { LogoutIcon } from "./icons";
 
-// 👉 Necesario si quieres mostrar el nombre del proyecto en breadcrumbs
-import { getProjectById } from "@/services/proyectServices";
-
-type TopbarProps = {
+export default function Topbar({
+  toggleSidebar,
+  headerTitle,
+}: {
   toggleSidebar: () => void;
-};
-
-export default function Topbar({ toggleSidebar }: TopbarProps) {
+  headerTitle?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
 
   const [userName, setUserName] = useState("");
   const [userImage, setUserImage] = useState(DEFAULT_IMAGE);
-  const [projectName, setProjectName] = useState<string | null>(null);
 
   const tokenUser = getTokenPayload();
 
-  // 📌 Cargar datos del usuario
   useEffect(() => {
     if (!tokenUser?.id) return;
 
-    const loadUser = async () => {
-      try {
-        const user = await getUserById(tokenUser.id);
+    getUserById(tokenUser.id)
+      .then((user) => {
         setUserImage(user.profileImage || DEFAULT_IMAGE);
         setUserName(user.name);
-      } catch (error) {
-        console.error("Error cargando usuario:", error);
-      }
-    };
-
-    loadUser();
+      })
+      .catch(() => {});
   }, []);
 
-  // 📌 Cargar nombre del proyecto si estamos en /extension/[id]
-  useEffect(() => {
-    if (!pathname) return;
-
-    const safePath = pathname ?? "";
-    const parts = safePath.split("/").filter(Boolean);
-
-    if (parts[0] === "extension" && parts[1]) {
-      const projectId = parts[1];
-
-      if (/^[0-9a-fA-F]{24}$/.test(projectId)) {
-        getProjectById(projectId)
-          .then((res) => {
-            if (res?.title) setProjectName(res.title);
-          })
-          .catch(() => {});
-      }
-    }
-  }, [pathname]);
-
-  // 📌 Breadcrumbs seguros (sin errores en Vercel)
+  // Breadcrumbs normales, pero reemplazando el ID por headerTitle cuando existe
   const safePath = pathname ?? "";
   const segments = safePath.split("/").filter(Boolean);
 
   const breadcrumbs = segments.map((segment, index) => {
     const href = "/" + segments.slice(0, index + 1).join("/");
 
-    // 🔥 Si estamos en /extension/[id] → reemplazar ID por título del proyecto
-    if (
-      segments[0] === "extension" &&
-      index === 1 &&
-      projectName &&
-      /^[0-9a-fA-F]{24}$/.test(segment)
-    ) {
-      return { href, label: projectName };
+    // Si estamos en /extension/[id] sustituimos por el título enviado desde el layout
+    if (segments[0] === "extension" && index === 1 && headerTitle) {
+      return { href, label: headerTitle };
     }
 
-    let label =
-      routeNames[segment] ||
-      segment.charAt(0).toUpperCase() + segment.slice(1);
-
-    return { href, label };
+    return {
+      href,
+      label:
+        routeNames[segment] ||
+        segment.charAt(0).toUpperCase() + segment.slice(1),
+    };
   });
 
-  // 🚪 Logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     router.push("/");
   };
 
   return (
-    <HeroUINavbar
-      className="flex items-center justify-between bg-white shadow px-4 py-3 md:px-6 w-full"
-      maxWidth="full"
-      position="sticky"
-    >
+    <HeroUINavbar className="flex items-end justify-between bg-white shadow px-4 py-3 md:px-6 w-full"
+  maxWidth="full"
+  position="sticky">
       <div className="flex items-center gap-4">
         <button
           onClick={toggleSidebar}
@@ -119,39 +85,32 @@ export default function Topbar({ toggleSidebar }: TopbarProps) {
           <Menu size={22} />
         </button>
 
-        {/* 🧭 Breadcrumbs */}
         <Breadcrumbs>
-          {breadcrumbs.length ? (
-            breadcrumbs.map((bc) => (
-              <BreadcrumbItem key={bc.href} href={bc.href}>
-                {bc.label}
-              </BreadcrumbItem>
-            ))
-          ) : (
-            <BreadcrumbItem>Inicio</BreadcrumbItem>
-          )}
+          {breadcrumbs.map((bc) => (
+            <BreadcrumbItem key={bc.href} href={bc.href}>
+              {bc.label}
+            </BreadcrumbItem>
+          ))}
         </Breadcrumbs>
       </div>
 
       {/* 👤 Menú usuario */}
       <div className="flex items-center gap-3">
         <span className="font-medium text-gray-700 hidden sm:block">
-          {userName || "Usuario"}
+          {userName}
         </span>
 
         <Dropdown placement="bottom-end">
           <DropdownTrigger>
             <Avatar
               isBordered
-              as="button"
-              className="cursor-pointer transition-transform"
+              className="cursor-pointer"
               size="sm"
-              name={userName || "U"}
               src={userImage}
             />
           </DropdownTrigger>
 
-          <DropdownMenu aria-label="Perfil" variant="flat">
+          <DropdownMenu variant="flat">
             <DropdownItem
               key="perfil"
               onPress={() => router.push("/user/profile")}
@@ -159,15 +118,11 @@ export default function Topbar({ toggleSidebar }: TopbarProps) {
               Mi perfil
             </DropdownItem>
 
-            <DropdownItem key="ajustes" isDisabled>
-              Ajustes <em>(próximamente)</em>
-            </DropdownItem>
-
             <DropdownItem
               key="logout"
               color="danger"
-              onPress={handleLogout}
               startContent={<LogoutIcon size={18} />}
+              onPress={handleLogout}
             >
               Cerrar sesión
             </DropdownItem>
