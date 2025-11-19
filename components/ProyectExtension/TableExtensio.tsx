@@ -76,7 +76,7 @@ const statusOptions = Object.entries(projectStatusMap).map(
 
 const projectTypeOptions = [
   { key: "Remunerado", label: "Remunerado" },
-  { key: "Solidario", label: "Solidario" },
+  { key: "Solidarío", label: "Solidarío" },
   // Añade más tipos si es necesario
 ];
 
