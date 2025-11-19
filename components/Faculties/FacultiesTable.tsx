@@ -63,7 +63,8 @@ export default function FacultiesTable({ faculties, loading }: any) {
         !f.deleted &&
         (f.name.toLowerCase().includes(q) ||
           f.code.toLowerCase().includes(q) ||
-          (f.description || "").toLowerCase().includes(q))
+          (f.description || "").toLowerCase().includes(q) ||
+          (f.decano?.name || "").toLowerCase().includes(q))
     );
   }, [filterValue, facultyList]);
 
@@ -88,6 +89,7 @@ export default function FacultiesTable({ faculties, loading }: any) {
         Código: f.code,
         Nombre: f.name,
         Descripción: f.description || "N/A",
+        Decano: f.decano ? `${f.decano.name} (${f.decano.email})` : "N/A",
         Estado: f.active ? "Activa" : "Inactiva",
       }));
 
@@ -110,20 +112,23 @@ export default function FacultiesTable({ faculties, loading }: any) {
 
     const doc = new jsPDF();
     doc.text("Reporte de Facultades", 20, 20);
+
     const body = facultyList
       .filter((f: any) => !f.deleted)
       .map((f: any) => [
         f.code,
         f.name,
         f.description || "N/A",
+        f.decano ? `${f.decano.name} (${f.decano.email})` : "N/A",
         f.active ? "Activa" : "Inactiva",
       ]);
 
     autoTable(doc, {
       startY: 30,
-      head: [["Código", "Nombre", "Descripción", "Estado"]],
+      head: [["Código", "Nombre", "Descripción", "Decano", "Estado"]],
       body,
     });
+
     doc.save("facultades.pdf");
   };
 
@@ -201,10 +206,22 @@ export default function FacultiesTable({ faculties, loading }: any) {
     switch (columnKey) {
       case "code":
         return <p className="font-medium">{faculty.code}</p>;
+
       case "name":
         return <p>{faculty.name}</p>;
+
       case "description":
         return <p>{faculty.description || "Sin descripción"}</p>;
+
+      case "decano":
+        return (
+          <p className="text-gray-700">
+            {faculty.decano
+              ? `${faculty.decano.name} (${faculty.decano.email})`
+              : "N/A"}
+          </p>
+        );
+
       case "active":
         return (
           <div className="flex items-center gap-2">
@@ -223,6 +240,7 @@ export default function FacultiesTable({ faculties, loading }: any) {
             </Chip>
           </div>
         );
+
       case "actions":
         return (
           <Dropdown>
@@ -242,6 +260,7 @@ export default function FacultiesTable({ faculties, loading }: any) {
               >
                 Ver detalles
               </DropdownItem>
+
               <DropdownItem
                 key="edit"
                 onPress={() => {
@@ -252,6 +271,7 @@ export default function FacultiesTable({ faculties, loading }: any) {
               >
                 Editar
               </DropdownItem>
+
               <DropdownItem
                 key="delete"
                 color="danger"
@@ -262,8 +282,9 @@ export default function FacultiesTable({ faculties, loading }: any) {
             </DropdownMenu>
           </Dropdown>
         );
+
       default:
-        return (faculty as any)[columnKey];
+        return faculty[columnKey];
     }
   }, []);
 
@@ -273,7 +294,7 @@ export default function FacultiesTable({ faculties, loading }: any) {
       <div className="flex flex-wrap gap-3 justify-between items-center">
         <Input
           isClearable
-          placeholder="Buscar por nombre, código o descripción..."
+          placeholder="Buscar por nombre, código, decano o descripción..."
           startContent={<SearchIcon />}
           className="w-full sm:max-w-[40%]"
           value={filterValue}
@@ -377,6 +398,10 @@ export default function FacultiesTable({ faculties, loading }: any) {
           <TableColumn key="code">Código</TableColumn>
           <TableColumn key="name">Nombre</TableColumn>
           <TableColumn key="description">Descripción</TableColumn>
+
+          {/* ⭐ NUEVA COLUMNA DECANO */}
+          <TableColumn key="decano">Decano</TableColumn>
+
           <TableColumn key="active">Estado</TableColumn>
           <TableColumn key="actions" align="center">
             Acciones

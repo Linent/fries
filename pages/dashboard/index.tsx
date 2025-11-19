@@ -15,11 +15,31 @@ import { FacultyChart } from "@/components/Dashboard/FacultyChart";
 import { YearChart } from "@/components/Dashboard/YearChart";
 import { PopulationsChart } from "@/components/Dashboard/PopulationsChart";
 import { toTruncatedPercent } from "@/helpers/truncate";
+import { getTokenPayload } from "@/utils/auth";
+import { useRouter } from "next/navigation";
+
 export default function DashboardPage() {
   const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const didRun = useRef(false);
+  const router = useRouter();
 
+  // -------------------------------------------------------------------
+  // 🔒 Protección por rol
+  // Solo admin y FRIES pueden ver el Dashboard
+  // -------------------------------------------------------------------
+  useEffect(() => {
+    const user = getTokenPayload();
+    const allowed = ["administrador", "fries"];
+
+    if (!user || !allowed.includes(user.role)) {
+      router.push("/extension"); // 🚫 redirigir a proyectos
+    }
+  }, [router]);
+
+  // -------------------------------------------------------------------
+  // 📊 Cargar estadísticas
+  // -------------------------------------------------------------------
   useEffect(() => {
     if (didRun.current) return;
     didRun.current = true;
@@ -38,6 +58,9 @@ export default function DashboardPage() {
     load();
   }, []);
 
+  // -------------------------------------------------------------------
+  // 🦴 Skeleton mientras carga
+  // -------------------------------------------------------------------
   const renderSkeleton = () => (
     <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4 mb-6">
       {[...Array(4)].map((_, i) => (
@@ -52,15 +75,17 @@ export default function DashboardPage() {
     </div>
   );
 
-  if (!data && loading) {
+  if (loading || !data) {
     return (
-      <LayoutDashboard>
-        <h1 className="text-2xl font-bold text-gray-700 mb-4">Dashboard</h1>
+      <LayoutDashboard headerTitle="Dashboard">
         {renderSkeleton()}
       </LayoutDashboard>
     );
   }
 
+  // -------------------------------------------------------------------
+  // 📊 Destructuring de los datos
+  // -------------------------------------------------------------------
   const {
     totalProjects,
     projectsByStatus,
@@ -75,10 +100,13 @@ export default function DashboardPage() {
     teacherParticipationRate,
     institutionalParticipationRate,
     populations,
-  } = data || {};
+  } = data;
 
+  // -------------------------------------------------------------------
+  // 🎨 Render final
+  // -------------------------------------------------------------------
   return (
-    <LayoutDashboard>
+    <LayoutDashboard headerTitle="Dashboard">
       <h1 className="text-2xl font-bold text-gray-700 mb-4">Dashboard</h1>
 
       {/* KPIs */}

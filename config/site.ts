@@ -9,8 +9,9 @@ export const siteConfig = {
       label: "Inicio",
       icon: "Home",
       href: "/dashboard",
-      roles: ["administrador", "fries", "formulador", "decano", "director"],
+      roles: ["administrador", "fries"], // 🔥 Solo estos ven estadísticas
     },
+    ,
     {
       label: "Proyectos de Extensión",
       href: "/extension",

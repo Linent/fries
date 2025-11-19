@@ -12,6 +12,13 @@ export const fetchUsers = async () => {
 
   return response.data;
 };
+export const fetchDeans = async () => {
+  const response = await api.get(`${BACKEND_URL}/${UserPath}/deans`, {
+    headers: getAuthHeaders(),
+  });
+
+  return response.data;
+};
 export const getUsers = async (q?: string, role?: string) => {
   const params = new URLSearchParams();
   if (q) params.append("q", q);

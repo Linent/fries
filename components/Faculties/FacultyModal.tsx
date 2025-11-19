@@ -12,7 +12,9 @@ import {
   Button,
   Alert,
 } from "@heroui/react";
+
 import { createFaculty, updateFaculty } from "@/services/facultyService";
+import DeanSelectorModal from "./DeanSelectorModal";
 
 interface FacultyModalProps {
   isOpen: boolean;
@@ -33,10 +35,12 @@ export default function FacultyModal({
     code: "",
     name: "",
     description: "",
+    decano: "", // id
+    decanoName: "" // nombre para mostrar
   });
+
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [showDeanSelector, setShowDeanSelector] = useState(false);
 
   const isView = mode === "view";
   const isEdit = mode === "edit";
@@ -47,152 +51,139 @@ export default function FacultyModal({
         code: faculty.code || "",
         name: faculty.name || "",
         description: faculty.description || "",
+        decano: faculty.decano?._id || "",
+        decanoName:
+          faculty.decano
+            ? `${faculty.decano.name} (${faculty.decano.email})`
+            : "",
       });
     } else {
-      setFormData({ code: "", name: "", description: "" });
+      setFormData({
+        code: "",
+        name: "",
+        description: "",
+        decano: "",
+        decanoName: "",
+      });
     }
-    setErrorMsg(null);
-    setSuccessMsg(null);
-  }, [faculty, mode]);
-
-  const getTitle = () =>
-    mode === "view"
-      ? "Detalles de Facultad"
-      : mode === "edit"
-        ? "Editar Facultad"
-        : "Nueva Facultad";
+  }, [faculty]);
 
   const handleSubmit = async () => {
-    if (!formData.code || !formData.name) {
-      setErrorMsg("Por favor completa el código y el nombre.");
-      return;
-    }
+    if (!formData.code || !formData.name) return;
 
     setLoading(true);
+
     try {
+      const payload = {
+        code: formData.code,
+        name: formData.name,
+        description: formData.description,
+        decano: formData.decano,
+      };
+
       const result =
         mode === "edit" && faculty
-          ? await updateFaculty(faculty._id, formData)
-          : await createFaculty(formData);
+          ? await updateFaculty(faculty._id, payload)
+          : await createFaculty(payload);
 
       onCreate(result);
-      setSuccessMsg(
-        mode === "edit"
-          ? "Los datos se han actualizado correctamente."
-          : "La facultad se ha registrado correctamente."
-      );
-
-      setTimeout(() => {
-        setSuccessMsg(null);
-        onClose();
-      }, 1200);
-    } catch (error: any) {
-      setErrorMsg(
-        error?.message ||
-          "No se pudo guardar la facultad. Inténtalo nuevamente."
-      );
+      setTimeout(onClose, 1000);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onOpenChange={onClose}
-      backdrop="blur"
-      size="lg"
-      placement="center"
-    >
-      <ModalContent>
-        {(close) => (
-          <>
-            <ModalHeader className="flex flex-col gap-1">
-              <h2
-                className={`text-xl font-semibold ${
-                  isView
-                    ? "text-primary"
-                    : isEdit
-                      ? "text-blue-600"
-                      : "text-success"
-                }`}
-              >
-                {getTitle()}
-              </h2>
-            </ModalHeader>
+    <>
+      <Modal isOpen={isOpen} onOpenChange={onClose} size="lg" backdrop="blur">
+        <ModalContent>
+          <ModalHeader>
+            <h2 className="text-xl font-semibold">
+              {mode === "view"
+                ? "Detalles de Facultad"
+                : mode === "edit"
+                ? "Editar Facultad"
+                : "Nueva Facultad"}
+            </h2>
+          </ModalHeader>
 
-            <ModalBody>
-              <div className="flex flex-col gap-4">
-                <Input
-                  label="Código"
-                  placeholder="Ej. FIS01"
-                  value={formData.code}
-                  onValueChange={(v) => setFormData({ ...formData, code: v })}
-                  isDisabled={isView}
-                  required
-                  classNames={{
-                    inputWrapper: isView ? "bg-gray-100" : "",
-                    input: isView ? "text-gray-800 font-medium" : "",
-                  }}
-                />
+          <ModalBody>
+            <div className="flex flex-col gap-4">
+              <Input
+                label="Código"
+                value={formData.code}
+                isDisabled={isView}
+                onValueChange={(v) => setFormData({ ...formData, code: v })}
+              />
 
-                <Input
-                  label="Nombre"
-                  placeholder="Ej. Facultad de Ingeniería"
-                  value={formData.name}
-                  onValueChange={(v) => setFormData({ ...formData, name: v })}
-                  isDisabled={isView}
-                  required
-                  classNames={{
-                    inputWrapper: isView ? "bg-gray-100" : "",
-                    input: isView ? "text-gray-800 font-medium" : "",
-                  }}
-                />
+              <Input
+                label="Nombre"
+                value={formData.name}
+                isDisabled={isView}
+                onValueChange={(v) => setFormData({ ...formData, name: v })}
+              />
 
-                <Textarea
-                  label="Descripción"
-                  placeholder="Descripción breve..."
-                  value={formData.description}
-                  onValueChange={(v) =>
-                    setFormData({ ...formData, description: v })
-                  }
-                  isDisabled={isView}
-                  classNames={{
-                    inputWrapper: isView ? "bg-gray-100" : "",
-                    input: isView ? "text-gray-800 font-medium" : "",
-                  }}
-                />
+              <Textarea
+                label="Descripción"
+                value={formData.description}
+                isDisabled={isView}
+                onValueChange={(v) =>
+                  setFormData({ ...formData, description: v })
+                }
+              />
 
-                {errorMsg && (
-                  <Alert color="danger" variant="solid">
-                    {errorMsg}
-                  </Alert>
-                )}
-                {successMsg && (
-                  <Alert color="success" variant="solid">
-                    {successMsg}
-                  </Alert>
-                )}
+              {/* Select personalizado de decano */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium mb-1">Decano</label>
+
+                <div className="flex gap-2">
+                  <Input
+                    isReadOnly
+                    placeholder="Ninguno seleccionado"
+                    value={formData.decanoName}
+                    className="w-full"
+                  />
+
+                  {!isView && (
+                    <Button
+                      color="primary"
+                      variant="flat"
+                      onPress={() => setShowDeanSelector(true)}
+                    >
+                      Buscar
+                    </Button>
+                  )}
+                </div>
               </div>
-            </ModalBody>
+            </div>
+          </ModalBody>
 
-            <ModalFooter>
-              <Button variant="flat" color="default" onPress={close}>
-                {isView ? "Cerrar" : "Cancelar"}
+          <ModalFooter>
+            <Button variant="flat" onPress={onClose}>
+              Cancelar
+            </Button>
+
+            {!isView && (
+              <Button color="success" isLoading={loading} onPress={handleSubmit}>
+                {isEdit ? "Guardar cambios" : "Crear facultad"}
               </Button>
-              {!isView && (
-                <Button
-                  color={isEdit ? "primary" : "success"}
-                  isLoading={loading}
-                  onPress={handleSubmit}
-                >
-                  {isEdit ? "Guardar cambios" : "Crear facultad"}
-                </Button>
-              )}
-            </ModalFooter>
-          </>
-        )}
-      </ModalContent>
-    </Modal>
+            )}
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Modal de selección de decano */}
+      <DeanSelectorModal
+        isOpen={showDeanSelector}
+        onClose={() => setShowDeanSelector(false)}
+        onSelect={(decano) =>
+          setFormData({
+            ...formData,
+            decano: decano._id,
+            decanoName: `${decano.name} (${decano.email})`,
+          })
+        }
+      />
+    </>
   );
 }

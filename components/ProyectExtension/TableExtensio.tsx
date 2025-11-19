@@ -39,6 +39,7 @@ import {
 import { useRouter } from "next/router";
 import { getTokenPayload } from "@/utils/auth";
 import { projectStatusMap, Project, ProjectsTableProps } from "@/types";
+import { fetchMyProjects } from "@/services/proyectServices";
 
 // ──────────────────────────────────────────────────────────────
 // Helpers de permisos (Sin cambios)
@@ -121,8 +122,12 @@ export default function ProjectsTableAdvanced({
 
   // 🔁 Actualiza lista si cambian las props
   useEffect(() => {
-    setProjectList(projects);
-  }, [projects]);
+  const load = async () => {
+    const data = await fetchMyProjects();
+    setProjectList(data);
+  };
+  load();
+}, []);
 
   // 🧩 IDs únicos
   const sanitizedProjects = useMemo(
