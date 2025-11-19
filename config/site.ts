@@ -11,7 +11,6 @@ export const siteConfig = {
       href: "/dashboard",
       roles: ["administrador", "fries"], // 🔥 Solo estos ven estadísticas
     },
-    ,
     {
       label: "Proyectos de Extensión",
       href: "/extension",
@@ -51,7 +50,7 @@ export const siteConfig = {
 
     {
       label: "Entidades",
-      href: "entidades",
+      href: "/entidades",
       roles: ["administrador", "fries"],
     },
   ],
