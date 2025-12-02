@@ -14,6 +14,7 @@ import {
   Card,
   Alert,
   Textarea,
+  DateInput,
 } from "@heroui/react";
 import { useEffect, useState } from "react";
 
@@ -242,18 +243,7 @@ export default function ProjectModal({
                   </Select>
 
                   <div className="flex gap-3">
-                    <Input
-                      required
-                      type="number"
-                      label="Año"
-                      placeholder="Ej: 2025"
-                      value={formData.year}
-                      onValueChange={(v) => {
-                        handleChange("year", v);
-                        if (validateYear(v)) setYearError("");
-                      }}
-                      isInvalid={!!yearError}
-                      errorMessage={yearError}
+                    <DateInput
                       className="flex-1"
                     />
 

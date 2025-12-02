@@ -14,6 +14,7 @@ import {
   RejectIcon,
   ForwardIcon,
 } from "@/components/icons";
+
 import ProjectRequirementsAlert from "./ProjectRequirementsAlert";
 
 // 🟦 Textos e íconos por cada estado
@@ -84,7 +85,6 @@ export default function StatusTab({ project, onStatusUpdated }: any) {
 
     setMsg({ type: "success", text: "Estado actualizado correctamente." });
 
-    // 🔵 Si se vuelve a formulación → redirigir fuera de la vista
     if (next === "en_formulacion") {
       setTimeout(() => {
         router.push("/extension");
@@ -92,11 +92,10 @@ export default function StatusTab({ project, onStatusUpdated }: any) {
       return;
     }
 
-    // Actualizar en el componente padre
     onStatusUpdated?.(next);
   };
 
-  // Nombre del estado actual
+  // Nombre del estado
   const readableStatus =
     projectStatusMap[currentStatus]?.label || currentStatus;
   const statusColor = projectStatusMap[currentStatus]?.color;
@@ -118,7 +117,9 @@ export default function StatusTab({ project, onStatusUpdated }: any) {
               {readableStatus}
             </Chip>
           </div>
+
           <ProjectRequirementsAlert project={project} />
+
           {/* 🔵 Línea visual del flujo */}
           <div className="flex items-center gap-4 flex-wrap justify-center py-4">
             {statusFlow.map((status, index) => {
@@ -154,14 +155,11 @@ export default function StatusTab({ project, onStatusUpdated }: any) {
           {/* 🔥 Botones */}
           {canChange ? (
             <div className="flex flex-wrap gap-3 items-center">
-              {/* FRIES / ADMIN → pueden ver TODOS LOS ESTADOS */}
-              {roles.some((r: string) =>
-                ["fries", "administrador"].includes(r)
-              ) ? (
+              {/* 🟥 ADMIN */}
+              {roles.includes("administrador") && (
                 <>
-                  {Object.keys(buttonConfig).map((status) => {
-                    const key = status as StatusKey;
-                    if (key === (currentStatus as StatusKey)) return null;
+                  {(Object.keys(buttonConfig) as StatusKey[]).map((key) => {
+                    if (key === currentStatus) return null;
 
                     return (
                       <Button
@@ -178,32 +176,90 @@ export default function StatusTab({ project, onStatusUpdated }: any) {
                     );
                   })}
                 </>
-              ) : (
+              )}
+
+              {/* 🟧 FRIES → no puede aprobar ni rechazar */}
+              {roles.includes("fries") && !roles.includes("administrador") && (
                 <>
-                  {/* Otros roles → ven solo lo permitido */}
-                  {availableNextStatuses.map((status) => {
-                    const key = status as StatusKey;
+                  {(Object.keys(buttonConfig) as StatusKey[]).map((key) => {
+                    if (key === currentStatus) return null;
+                    if (key === "aprobado" || key === "rechazado") return null;
+
                     return (
                       <Button
                         key={key}
-                        color={buttonConfig[key]?.color}
+                        color={buttonConfig[key].color}
                         variant="solid"
                         className="min-w-[260px] flex items-center gap-2"
                         onPress={() => handleStatusChange(key)}
                         isLoading={loading}
                       >
-                        {buttonConfig[key]?.icon}
-                        {buttonConfig[key]?.label}
+                        {buttonConfig[key].icon}
+                        {buttonConfig[key].label}
                       </Button>
                     );
                   })}
                 </>
               )}
+
+              {/* 🟩 VICERRECTORÍA */}
+              {roles.includes("vicerrectoria") &&
+                !roles.includes("administrador") &&
+                !roles.includes("fries") && (
+                  <>
+                    {["aprobado", "rechazado", "en_formulacion"].map(
+                      (rawKey) => {
+                        const key = rawKey as StatusKey;
+                        if (key === currentStatus) return null;
+
+                        return (
+                          <Button
+                            key={key}
+                            color={buttonConfig[key].color}
+                            variant="solid"
+                            className="min-w-[260px] flex items-center gap-2"
+                            onPress={() => handleStatusChange(key)}
+                            isLoading={loading}
+                          >
+                            {buttonConfig[key].icon}
+                            {buttonConfig[key].label}
+                          </Button>
+                        );
+                      }
+                    )}
+                  </>
+                )}
+
+              {/* 🟦 OTROS ROLES */}
+              {!roles.includes("administrador") &&
+                !roles.includes("fries") &&
+                !roles.includes("vicerrectoria") && (
+                  <>
+                    {availableNextStatuses.map((status) => {
+                      const key = status as StatusKey;
+                      if (!buttonConfig[key]) return null;
+
+                      const cfg = buttonConfig[key];
+
+                      return (
+                        <Button
+                          key={key}
+                          color={cfg.color}
+                          variant="solid"
+                          className="min-w-[260px] flex items-center gap-2"
+                          onPress={() => handleStatusChange(key)}
+                          isLoading={loading}
+                        >
+                          {cfg.icon}
+                          {cfg.label}
+                        </Button>
+                      );
+                    })}
+                  </>
+                )}
             </div>
           ) : (
-            <p className="text-gray-500">
-              No tienes permisos para cambiar el estado.
-            </p>
+            <p className="text-gray-500">No tienes permisos para cambiar el estado.</p>
           )}
         </CardBody>
       </Card>

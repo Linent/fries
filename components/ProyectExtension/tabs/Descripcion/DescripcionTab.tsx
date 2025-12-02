@@ -14,6 +14,7 @@ import {
 } from "@heroui/react";
 import { PlusCircleIcon } from "@/components/icons";
 import { updateProject } from "@/services/proyectServices";
+import LocationAutocomplete from "@/components/ProyectExtension/tabs/Descripcion/LocationAutocomplete";
 
 export default function DescripcionTab({
   project,
@@ -33,9 +34,10 @@ export default function DescripcionTab({
   });
 
   const [saving, setSaving] = useState(false);
-  const [alert, setAlert] = useState<{ type: "success" | "danger"; text: string } | null>(
-    null
-  );
+  const [alert, setAlert] = useState<{
+    type: "success" | "danger";
+    text: string;
+  } | null>(null);
 
   const didInit = useRef(false);
 
@@ -49,7 +51,8 @@ export default function DescripcionTab({
         location: project.location || "",
         objectiveGeneral: project.objectiveGeneral || "",
         objectivesSpecific:
-          Array.isArray(project.objectivesSpecific) && project.objectivesSpecific.length > 0
+          Array.isArray(project.objectivesSpecific) &&
+          project.objectivesSpecific.length > 0
             ? project.objectivesSpecific
             : [""],
       });
@@ -65,7 +68,8 @@ export default function DescripcionTab({
         location: project.location || "",
         objectiveGeneral: project.objectiveGeneral || "",
         objectivesSpecific:
-          Array.isArray(project.objectivesSpecific) && project.objectivesSpecific.length > 0
+          Array.isArray(project.objectivesSpecific) &&
+          project.objectivesSpecific.length > 0
             ? project.objectivesSpecific
             : [""],
       });
@@ -109,7 +113,9 @@ export default function DescripcionTab({
         justification: formData.justification,
         location: formData.location,
         objectiveGeneral: formData.objectiveGeneral,
-        objectivesSpecific: formData.objectivesSpecific.filter((o) => o.trim() !== ""),
+        objectivesSpecific: formData.objectivesSpecific.filter(
+          (o) => o.trim() !== ""
+        ),
       };
 
       const updatedProject = await updateProject(project._id, payload);
@@ -170,13 +176,10 @@ export default function DescripcionTab({
             isDisabled={!editable}
           />
 
-          <Input
+          <LocationAutocomplete
             label="Ubicación geográfica"
-            labelPlacement="outside"
-            placeholder="Ubicación donde se va a ejecutar el proyecto"
             value={formData.location}
-            onChange={(e) => handleChange("location", e.target.value)}
-            isDisabled={!editable}
+            onChange={(v) => editable && handleChange("location", v)}
           />
 
           <Textarea

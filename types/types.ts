@@ -122,6 +122,12 @@ export interface UserDocente {
   role: string;
 }
 
+
+export interface Department {
+  departamento: string;
+  ciudades: string[];
+}
+
 export const routeNames: Record<string, string> = {
   dashboard: "Estadísticas",
   extension: "Proyectos de Extensión",
