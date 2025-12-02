@@ -16,17 +16,21 @@ import {
   Textarea,
 } from "@heroui/react";
 import { useEffect, useState } from "react";
+
 import { getFaculties } from "@/services/facultyService";
+import { getProgramsByFaculty } from "@/services/programService";
 import { createProject } from "@/services/proyectServices";
-import { Faculty } from "@/types/types";
+
+import { Faculty, Program, Project } from "@/types";
+import { getTokenPayload } from "@/utils/auth";
 
 interface ProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (project: any) => void;
+  onCreate?: (project: Project) => void;
 }
 
-const typeProjects = ["Remunerado", "Solidario"];
+const typeProjects = ["Remunerado", "Solidarío"];
 const semesters = ["Primero", "Segundo"];
 
 export default function ProjectModal({
@@ -35,36 +39,50 @@ export default function ProjectModal({
   onCreate,
 }: ProjectModalProps) {
   const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
   const [loadingFaculties, setLoadingFaculties] = useState(true);
+  const [loadingPrograms, setLoadingPrograms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [yearError, setYearError] = useState("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // 🔐 Roles — permitir crear si es administrador, fries o formulador
+  const user = getTokenPayload();
+  const roles: string[] = user?.roles || [];
+
+  const canCreate =
+    roles.includes("administrador") ||
+    roles.includes("fries") ||
+    roles.includes("formulador");
+
+  if (!canCreate) return null;
+
+  // 🧩 Datos del formulario
   const [formData, setFormData] = useState({
-    code: "",
     title: "",
     description: "",
     typeProject: "",
     year: "",
     semester: "",
-    faculty: "", // almacena el _id de la facultad
+    faculty: "",
+    program: "",
   });
 
-  // 🔄 Cargar facultades desde el backend
+  // 🔄 Cargar facultades al abrir
   useEffect(() => {
     const loadFaculties = async () => {
       try {
         setLoadingFaculties(true);
         const data = await getFaculties();
         setFaculties(data);
-      } catch (error) {
-        console.error("Error al cargar facultades:", error);
+      } catch {
         setErrorMessage("Error al cargar las facultades.");
       } finally {
         setLoadingFaculties(false);
       }
     };
+
     if (isOpen) {
       setSuccessMessage(null);
       setErrorMessage(null);
@@ -72,74 +90,102 @@ export default function ProjectModal({
     }
   }, [isOpen]);
 
+  // 🔁 Cargar programas cuando se selecciona facultad
+  useEffect(() => {
+    if (!formData.faculty) {
+      setPrograms([]);
+      return;
+    }
+
+    const loadPrograms = async () => {
+      try {
+        setLoadingPrograms(true);
+        const data = await getProgramsByFaculty(formData.faculty);
+        setPrograms(data);
+      } catch {
+        setErrorMessage("No se pudieron cargar los programas.");
+      } finally {
+        setLoadingPrograms(false);
+      }
+    };
+
+    loadPrograms();
+  }, [formData.faculty]);
+
   const handleChange = (field: string, value: string) => {
     if (field === "semester") value = value.toLowerCase();
+
+    // Si cambia la facultad, limpiar programa
+    if (field === "faculty") {
+      setFormData((prev) => ({ ...prev, faculty: value, program: "" }));
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const validateYear = (year: string) => {
-    if (!year) return false;
     const num = parseInt(year);
     return num >= 1990 && year.length === 4;
   };
 
   const handleSubmit = async () => {
-    if (isSubmitting) return; // evita doble envío
+    if (isSubmitting) return;
 
     if (
-      !formData.code ||
       !formData.title ||
+      !formData.description ||
       !formData.typeProject ||
       !formData.year ||
       !formData.semester ||
       !formData.faculty ||
-      !formData.description
+      !formData.program
     ) {
-      setErrorMessage("Por favor completa todos los campos obligatorios.");
+      setErrorMessage("Completa todos los campos obligatorios.");
       return;
     }
 
     if (!validateYear(formData.year)) {
-      setYearError("El año debe tener 4 dígitos y ser mayor o igual a 1990.");
+      setYearError("El año debe ser >= 1990 y tener 4 dígitos.");
       return;
     }
 
     setIsSubmitting(true);
-    setYearError("");
     setErrorMessage(null);
     setSuccessMessage(null);
 
     try {
       const payload = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
+        typeProject: formData.typeProject,
         year: parseInt(formData.year),
-        status: "en_formulacion",
+        semester: formData.semester,
+        faculty: formData.faculty,
+        program: formData.program,
       };
 
       const createdProject = await createProject(payload);
-      onCreate(createdProject);
+      onCreate?.(createdProject);
 
-      // ✅ Mostrar mensaje de éxito
       setSuccessMessage("Proyecto registrado exitosamente 🎉");
 
-      // 🧹 Limpiar formulario
+      // Resetear formulario
       setFormData({
-        code: "",
         title: "",
         description: "",
         typeProject: "",
         year: "",
         semester: "",
         faculty: "",
+        program: "",
       });
 
-      // ⏳ Cerrar el modal después de 2 segundos
       setTimeout(() => {
         setSuccessMessage(null);
         onClose();
-      }, 2000);
+      }, 1500);
     } catch (error: any) {
-      console.error("Error al crear el proyecto:", error);
       setErrorMessage(
         error?.response?.data?.message ||
           "No se pudo crear el proyecto. Intenta nuevamente."
@@ -155,66 +201,42 @@ export default function ProjectModal({
         {(close) => (
           <>
             <ModalHeader className="text-xl font-semibold">
-              Registrar nuevo proyecto
+              Registrar nuevo proyecto de extensión
             </ModalHeader>
 
             <ModalBody className="space-y-4">
               {isSubmitting ? (
-                // ⏳ Skeleton mientras se guarda
                 <Card className="w-full space-y-5 p-4" radius="lg">
                   {[...Array(6)].map((_, i) => (
-                    <Skeleton
-                      key={i}
-                      className="h-10 rounded-lg bg-default-300"
-                    />
+                    <Skeleton key={i} className="h-10 rounded-lg bg-default-300" />
                   ))}
                 </Card>
               ) : (
                 <>
                   <Input
-                    label="Código de la unidad académica"
-                    placeholder="Ej: 115"
-                    value={formData.code}
-                    onValueChange={(value) => handleChange("code", value)}
-                    required
-                  />
-
-                  <Input
                     label="Título del proyecto"
                     placeholder="Ingrese el título..."
                     value={formData.title}
-                    onValueChange={(value) => handleChange("title", value)}
-                    required
+                    onValueChange={(v) => handleChange("title", v)}
                   />
 
-                  {/* 📝 Nuevo campo: descripción del proyecto */}
                   <Textarea
                     label="Descripción del proyecto"
-                    placeholder="Describe brevemente el propósito y alcance del proyecto..."
+                    placeholder="Describe el propósito general..."
                     value={formData.description}
-                    onValueChange={(value) =>
-                      handleChange("description", value)
-                    }
-                    required
+                    onValueChange={(v) => handleChange("description", v)}
                     minRows={3}
-                    variant="bordered"
                   />
 
                   <Select
                     label="Tipo de proyecto"
-                    placeholder="Seleccione tipo..."
                     selectedKeys={
-                      formData.typeProject
-                        ? new Set([formData.typeProject])
-                        : new Set()
+                      formData.typeProject ? new Set([formData.typeProject]) : new Set()
                     }
-                    onChange={(e) =>
-                      handleChange("typeProject", e.target.value)
-                    }
-                    required
+                    onChange={(e) => handleChange("typeProject", e.target.value)}
                   >
-                    {typeProjects.map((type) => (
-                      <SelectItem key={type}>{type}</SelectItem>
+                    {typeProjects.map((t) => (
+                      <SelectItem key={t}>{t}</SelectItem>
                     ))}
                   </Select>
 
@@ -223,13 +245,11 @@ export default function ProjectModal({
                       type="number"
                       label="Año"
                       placeholder="Ej: 2025"
-                      min={1900}
                       value={formData.year}
-                      onValueChange={(value) => {
-                        handleChange("year", value);
-                        if (validateYear(value)) setYearError("");
+                      onValueChange={(v) => {
+                        handleChange("year", v);
+                        if (validateYear(v)) setYearError("");
                       }}
-                      required
                       isInvalid={!!yearError}
                       errorMessage={yearError}
                       className="flex-1"
@@ -237,7 +257,6 @@ export default function ProjectModal({
 
                     <Select
                       label="Semestre"
-                      placeholder="Seleccione semestre..."
                       selectedKeys={
                         formData.semester
                           ? new Set([
@@ -248,7 +267,6 @@ export default function ProjectModal({
                       }
                       onChange={(e) => handleChange("semester", e.target.value)}
                       className="flex-1"
-                      required
                     >
                       {semesters.map((s) => (
                         <SelectItem key={s}>{s}</SelectItem>
@@ -256,31 +274,38 @@ export default function ProjectModal({
                     </Select>
                   </div>
 
+                  {/* FACULTADES */}
                   {loadingFaculties ? (
-                    <Card className="w-full space-y-5 p-4" radius="lg">
-                      <Skeleton className="rounded-lg h-10 bg-default-300" />
-                      <Skeleton className="rounded-lg h-10 bg-default-200" />
-                    </Card>
+                    <Skeleton className="h-10 rounded-lg bg-default-300" />
                   ) : (
                     <Select
-                      placeholder="Seleccione facultad..."
+                      label="Facultad"
                       selectedKeys={
-                        formData.faculty
-                          ? new Set([formData.faculty])
-                          : new Set()
+                        formData.faculty ? new Set([formData.faculty]) : new Set()
                       }
                       onChange={(e) => handleChange("faculty", e.target.value)}
-                      required
                     >
-                      {faculties.map((fac) => (
-                        <SelectItem key={fac._id} textValue={fac.name}>
-                          {fac.name} {fac.code ? `(${fac.code})` : ""}
-                        </SelectItem>
+                      {faculties.map((f) => (
+                        <SelectItem key={f._id}>{f.name}</SelectItem>
                       ))}
                     </Select>
                   )}
 
-                  {/* ⚠️ Mensajes visuales */}
+                  {/* PROGRAMAS */}
+                  <Select
+                    label="Programa académico"
+                    isDisabled={!formData.faculty || loadingPrograms}
+                    selectedKeys={
+                      formData.program ? new Set([formData.program]) : new Set()
+                    }
+                    isLoading={loadingPrograms}
+                    onChange={(e) => handleChange("program", e.target.value)}
+                  >
+                    {programs.map((p) => (
+                      <SelectItem key={p._id}>{p.name}</SelectItem>
+                    ))}
+                  </Select>
+
                   {errorMessage && (
                     <Alert color="danger" variant="solid">
                       {errorMessage}
@@ -300,11 +325,7 @@ export default function ProjectModal({
               <Button variant="flat" color="danger" onPress={close}>
                 Cancelar
               </Button>
-              <Button
-                color="primary"
-                isLoading={isSubmitting}
-                onPress={handleSubmit}
-              >
+              <Button color="primary" onPress={handleSubmit} isLoading={isSubmitting}>
                 Guardar proyecto
               </Button>
             </ModalFooter>

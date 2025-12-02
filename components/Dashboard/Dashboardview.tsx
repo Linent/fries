@@ -12,13 +12,13 @@ export default function DashboardView() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("role");
+    const roles = localStorage.getItem("roles");
 
     if (!token) {
       router.replace("/");
     } else {
       setIsAuthenticated(true);
-      setUserRole(role);
+      setUserRole(roles);
     }
     setLoading(false);
   }, [router]);

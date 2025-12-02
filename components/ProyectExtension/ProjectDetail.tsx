@@ -31,13 +31,12 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
   const [form, setForm] = useState<Partial<Project>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "danger";
-    text: string;
-  } | null>(null);
+  const [message, setMessage] = useState<{ type: "success" | "danger"; text: string } | null>(
+    null
+  );
 
   const user = getTokenPayload();
-  const role = user?.role || "";
+  const roles: string[] = user?.roles || [];
   const userId = user?.id;
 
   type StatusKey =
@@ -57,7 +56,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
     rechazado: "Rechazado",
   };
 
-  const NEXT_STATUS_BY_ROLE: Record<string, Record<string, string[]>> = {
+  const NEXT_STATUS: Record<string, Record<string, string[]>> = {
     formulador: { en_formulacion: ["en_revision_director"] },
     director_programa: {
       en_revision_director: ["en_revision_decano", "en_formulacion"],
@@ -67,7 +66,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
     },
     fries: { en_revision_fries: ["aprobado", "rechazado", "en_formulacion"] },
     vicerrector: { en_revision_fries: ["aprobado", "rechazado"] },
-    admin: {
+    administrador: {
       en_formulacion: [
         "en_revision_director",
         "en_revision_decano",
@@ -78,36 +77,56 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
     },
   };
 
-  const canEdit = (project: Project, role: string, userId?: string) => {
-    if (role === "administrador") return true;
-    if (role === "fries") return project.status === "en_formulacion";
-    if (role === "formulador")
-      return (
-        project.status === "en_formulacion" &&
-        ((typeof project.createdBy === "object" &&
-          project.createdBy !== null &&
-          " _id" in project.createdBy &&
-          (project.createdBy as { _id: string })._id === userId) ||
-          (typeof project.createdBy === "string" &&
-            project.createdBy === userId))
-      );
+  /** -----------------------------------------------------------
+   * 🧠 NUEVO: canEdit con roles múltiples
+   ----------------------------------------------------------- */
+  const canEdit = (project: Project): boolean => {
+    if (roles.includes("administrador")) return true;
+    if (roles.includes("fries")) return project.status === "en_formulacion";
+
+    if (roles.includes("formulador")) {
+      const createdById =
+        typeof project.createdBy === "object"
+          ? project.createdBy?._id
+          : project.createdBy;
+
+      return project.status === "en_formulacion" && createdById === userId;
+    }
+
     return false;
   };
 
-  // 🔹 Cargar el proyecto
+  /** -----------------------------------------------------------
+   * 🧠 Estados permitidos según TODOS los roles del usuario
+   ----------------------------------------------------------- */
+  const statusOptions = useMemo(() => {
+    if (!project) return [];
+
+    const finalStatuses = new Set<string>();
+
+    roles.forEach((r) => {
+      const next = NEXT_STATUS[r]?.[project.status] || [];
+      next.forEach((opt) => finalStatuses.add(opt));
+    });
+
+    return Array.from(finalStatuses);
+  }, [project, roles]);
+
+  // 🔹 Cargar proyecto
   useEffect(() => {
     if (!projectId) return;
-    const fetchData = async () => {
+
+    const load = async () => {
       try {
         const data = await getProjectById(projectId);
         setProject(data);
         setForm({
           title: data.title,
           code: data.code,
-          description: data.description || "",
-          typeProject: (data as any).typeProject || "",
-          year: (data as any).year || new Date().getFullYear(),
-          semester: (data as any).semester || "",
+          description: data.description,
+          typeProject: (data as any).typeProject,
+          year: (data as any).year,
+          semester: (data as any).semester,
         });
       } catch (error) {
         console.error("Error al cargar proyecto:", error);
@@ -115,31 +134,23 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
         setLoading(false);
       }
     };
-    fetchData();
+
+    load();
   }, [projectId]);
 
-  const editable = useMemo(
-    () => (project ? canEdit(project, role, userId) : false),
-    [project, role, userId]
-  );
-  const statusOptions = useMemo(
-    () => (project ? NEXT_STATUS_BY_ROLE[role]?.[project.status] || [] : []),
-    [project, role]
-  );
+  const editable = project ? canEdit(project) : false;
 
   const handleChange = (key: keyof Project, value: any) =>
-    setForm((p) => ({ ...p, [key]: value }));
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   const handleChangeStatus = async (status: string) => {
     if (!project) return;
     setSaving(true);
+
     try {
       const updated = await updateProjectStatus(project._id!, status);
       setProject(updated);
-      setMessage({
-        type: "success",
-        text: "Estado actualizado correctamente.",
-      });
+      setMessage({ type: "success", text: "Estado actualizado." });
     } catch {
       setMessage({ type: "danger", text: "Error al cambiar el estado." });
     } finally {
@@ -150,36 +161,33 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
   const handleSave = async () => {
     if (!project) return;
     setSaving(true);
+
     try {
       const updated = await updateProject(project._id!, form);
       setProject(updated);
-      setMessage({
-        type: "success",
-        text: "Proyecto actualizado correctamente.",
-      });
+      setMessage({ type: "success", text: "Cambios guardados." });
     } catch {
-      setMessage({ type: "danger", text: "Error al guardar los cambios." });
+      setMessage({ type: "danger", text: "Error al guardar cambios." });
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
+  if (loading)
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner color="primary" label="Cargando proyecto..." />
       </div>
     );
-  }
 
-  if (!project) {
+  if (!project)
     return <Alert color="danger">No se encontró el proyecto solicitado.</Alert>;
-  }
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-700">{project.title}</h1>
+        <h1 className="text-2xl font-bold">{project.title}</h1>
+
         <div className="flex gap-2">
           <Dropdown>
             <DropdownTrigger>
@@ -187,14 +195,14 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
                 Cambiar estado
               </Button>
             </DropdownTrigger>
+
             <DropdownMenu onAction={(key) => handleChangeStatus(String(key))}>
-              {statusOptions.map((status) => (
-                <DropdownItem key={status}>
-                  {STATUS_LABEL[status as StatusKey]}
-                </DropdownItem>
+              {statusOptions.map((st) => (
+                <DropdownItem key={st}>{STATUS_LABEL[st as StatusKey]}</DropdownItem>
               ))}
             </DropdownMenu>
           </Dropdown>
+
           <Button variant="bordered" onClick={() => router.push("/extension")}>
             Volver
           </Button>
@@ -212,20 +220,19 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
               onValueChange={(v) => handleChange("title", v)}
               disabled={!editable}
             />
+
             <Input label="Código" value={form.code || ""} disabled />
+
             <Select
               label="Tipo de proyecto"
-              selectedKeys={
-                form.typeProject ? new Set([form.typeProject]) : new Set()
-              }
-              onChange={(e) =>
-                handleChange("typeProject" as any, e.target.value)
-              }
+              selectedKeys={form.typeProject ? new Set([form.typeProject]) : new Set()}
+              onChange={(e) => handleChange("typeProject" as any, e.target.value)}
               disabled={!editable}
             >
               <SelectItem key="Remunerado">Remunerado</SelectItem>
               <SelectItem key="Solidario">Solidario</SelectItem>
             </Select>
+
             <Input
               label="Año"
               type="number"
@@ -233,17 +240,17 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
               onValueChange={(v) => handleChange("year" as any, v)}
               disabled={!editable}
             />
+
             <Select
               label="Semestre"
-              selectedKeys={
-                form.semester ? new Set([form.semester]) : new Set()
-              }
+              selectedKeys={form.semester ? new Set([form.semester]) : new Set()}
               onChange={(e) => handleChange("semester" as any, e.target.value)}
               disabled={!editable}
             >
               <SelectItem key="Primero">Primero</SelectItem>
               <SelectItem key="Segundo">Segundo</SelectItem>
             </Select>
+
             <Textarea
               label="Descripción"
               value={form.description || ""}
@@ -264,15 +271,11 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
         </Tab>
 
         <Tab key="documentos" title="Documentos">
-          <p className="p-4 text-gray-600">
-            Gestión de documentos (pendiente de implementación)
-          </p>
+          <p className="p-4 text-gray-600">Gestión de documentos (pendiente)</p>
         </Tab>
 
         <Tab key="comentarios" title="Comentarios">
-          <p className="p-4 text-gray-600">
-            Sección de comentarios (pendiente de implementación)
-          </p>
+          <p className="p-4 text-gray-600">Comentarios (pendiente)</p>
         </Tab>
       </Tabs>
     </div>

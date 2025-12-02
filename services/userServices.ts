@@ -35,9 +35,16 @@ export const loginUser = async (email: string, password: string) => {
     email,
     password,
   });
+  console.log(response.data);
   return response.data; // debe incluir { token, user }
 };
-
+export const getDirectorsProgramRole = async () => {
+  const { data } = await api.get(
+    `${BACKEND_URL}/${UserPath}/directors-program`,
+    { headers: getAuthHeaders() }
+  );
+  return data;
+};
 export const registerUser = async (userData: IUser) => {
   const response = await api.post(
     `${BACKEND_URL}/${UserPath}/register`,

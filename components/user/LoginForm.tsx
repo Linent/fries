@@ -24,7 +24,9 @@ export default function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // -------------------------------------------------------------------
   // 🔐 Si ya tiene token, no dejar entrar al login
+  // -------------------------------------------------------------------
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -37,7 +39,9 @@ export default function LoginForm() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 🔥 Login con loading real y manejo de errores
+  // -------------------------------------------------------------------
+  // 🔥 Login con roles múltiples
+  // -------------------------------------------------------------------
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -49,12 +53,23 @@ export default function LoginForm() {
         formData.password
       );
 
+      // Guardar token
       localStorage.setItem("token", token);
-      localStorage.setItem("role", user.role);
-      localStorage.setItem("userName", user.firstName);
+
+      // NUEVO: roles múltiples (array)
+      if (Array.isArray(user.roles)) {
+        localStorage.setItem("roles", JSON.stringify(user.roles));
+      } else {
+        // fallback si backend envía string
+        localStorage.setItem("roles", JSON.stringify([user.roles]));
+      }
+
+      // Nombre del usuario
+      localStorage.setItem("userName", user.firstName || user.name);
 
       setIsAuthenticated(true);
       router.push("/dashboard");
+
     } catch (err: any) {
       console.error("Error en el login:", err.response || err);
 
@@ -89,23 +104,16 @@ export default function LoginForm() {
         <div className="flex flex-col justify-center items-center text-center flex-1 px-10">
           <h1 className="text-4xl font-bold mb-4">Bienvenido a Fries</h1>
           <p className="text-lg text-red-100 mb-6 max-w-md">
-            Sistema integral para la gestión de proyectos de extensión
-            universitaria.
+            Sistema integral para la gestión de proyectos de extensión universitaria.
           </p>
 
           <LogoFries />
         </div>
 
         <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-6 text-sm opacity-90">
-          <a href="#" className="hover:underline">
-            Acerca de
-          </a>
-          <a href="#" className="hover:underline">
-            Privacidad
-          </a>
-          <a href="#" className="hover:underline">
-            Términos
-          </a>
+          <a href="#" className="hover:underline">Acerca de</a>
+          <a href="#" className="hover:underline">Privacidad</a>
+          <a href="#" className="hover:underline">Términos</a>
         </div>
       </div>
 

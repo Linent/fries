@@ -109,7 +109,96 @@ export const MoonFilledIcon = ({
     />
   </svg>
 );
+export const BackIcon = (props: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    viewBox="0 0 24 24"
+    width="1em"
+    height="1em"
+    {...props}
+  >
+    <path
+      d="M19 12H5"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <path
+      d="M12 19L5 12L12 5"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
 
+export const ForwardIcon = (props: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    viewBox="0 0 24 24"
+    width="1em"
+    height="1em"
+    {...props}
+  >
+    <path
+      d="M5 12H19"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <path
+      d="M12 5L19 12L12 19"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+export const ApproveIcon = (props: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    viewBox="0 0 24 24"
+    width="1em"
+    height="1em"
+    {...props}
+  >
+    <path
+      d="M5 13l4 4L19 7"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+export const RejectIcon = (props: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    viewBox="0 0 24 24"
+    width="1em"
+    height="1em"
+    {...props}
+  >
+    <path
+      d="M18 6L6 18"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+    <path
+      d="M6 6L18 18"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
 export const SunFilledIcon = ({
   size = 24,
   width,

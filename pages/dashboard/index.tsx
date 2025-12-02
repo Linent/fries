@@ -25,15 +25,21 @@ export default function DashboardPage() {
   const router = useRouter();
 
   // -------------------------------------------------------------------
-  // 🔒 Protección por rol
-  // Solo admin y FRIES pueden ver el Dashboard
+  // 🔒 Protección por roles (roles: string[])
+  // Solo "administrador" y "fries" pueden ver el dashboard
   // -------------------------------------------------------------------
   useEffect(() => {
     const user = getTokenPayload();
-    const allowed = ["administrador", "fries"];
+    const allowedRoles = ["administrador", "fries"];
 
-    if (!user || !allowed.includes(user.role)) {
-      router.push("/extension"); // 🚫 redirigir a proyectos
+    // user?.roles es un array → debemos usar .some()
+    const hasPermission =
+      user && Array.isArray(user.roles)
+        ? user.roles.some((role) => allowedRoles.includes(role))
+        : false;
+
+    if (!hasPermission) {
+      router.push("/extension"); // 🚫 redirigir si NO tiene acceso
     }
   }, [router]);
 
@@ -84,7 +90,7 @@ export default function DashboardPage() {
   }
 
   // -------------------------------------------------------------------
-  // 📊 Destructuring de los datos
+  // 📊 Destructurar datos del backend
   // -------------------------------------------------------------------
   const {
     totalProjects,
@@ -102,9 +108,6 @@ export default function DashboardPage() {
     populations,
   } = data;
 
-  // -------------------------------------------------------------------
-  // 🎨 Render final
-  // -------------------------------------------------------------------
   return (
     <LayoutDashboard headerTitle="Dashboard">
       <h1 className="text-2xl font-bold text-gray-700 mb-4">Dashboard</h1>

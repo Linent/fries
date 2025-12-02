@@ -10,6 +10,7 @@ import PoblacionTab from "./tabs/Poblacion/PoblacionTab";
 import ResultadosImpactosTab from "./tabs/ResultadosImpactosTab/ResultadosImpactosTab";
 import DocumentosTab from "./tabs/Documentos/DocumentosTab";
 import ComentariosTab from "./tabs/Commets/ComentariosTabs";
+import StatusTab from "@/components/ProyectExtension/tabs/Status/StatusTab";
 
 export default function ProjectTabs({
   project: initialProject,
@@ -70,6 +71,9 @@ export default function ProjectTabs({
       </Tab>
       <Tab key="comments" title="Comentarios">
         <ComentariosTab editable={editable} project={project} />
+      </Tab>
+      <Tab key="status" title="Estado">
+        <StatusTab project={project} onStatusUpdated={handleProjectUpdate} />
       </Tab>
     </Tabs>
   );

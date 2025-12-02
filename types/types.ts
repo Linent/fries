@@ -53,6 +53,59 @@ export interface Faculty {
   code: string;
   description?: string;
 }
+
+// Program types
+export interface ProgramDirector {
+  _id?: string;
+  firstName?: string;
+  firstLastName?: string;
+  email?: string;
+}
+
+export interface Program {
+  _id: string;
+  code: string;
+  name: string;
+  faculty?: Faculty | { _id: string; name: string; code?: string } | null;
+  director?: ProgramDirector | null;
+  active?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ProgramUpsertDTO {
+  name: string;
+  code: string;
+  faculty: string; // faculty id
+  director: string; // director id
+  onSave?: (data: ProgramUpsertDTO) => void | Promise<void>;
+}
+
+export interface ProgramTableProps {
+  programs: Program[];
+  loading: boolean;
+  onEdit: (id: string, data: ProgramUpsertDTO) => void | Promise<void>;
+  onDelete: (id: string) => void | Promise<void>;
+  onCreate: (data: ProgramUpsertDTO) => void | Promise<void>;
+  onRefresh?: () => void | Promise<void>;
+  onSave?: (programId: string, directorId: string) => void | Promise<void>;
+}
+
+export interface ProgramModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  program: Program | null;
+  onSave: (data: ProgramUpsertDTO) => void | Promise<void>;
+}
+
+export type DirectorSummary = Pick<IUser, "_id" | "firstName" | "firstLastName" | "email">;
+
+export interface AssignDirectorModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (programId: string, directorId: string) => void | Promise<void>;
+  program: Program | null;
+}
 export interface UserDocente {
   tipo_documento: string;
   codigo: string;
@@ -82,6 +135,8 @@ export const routeNames: Record<string, string> = {
   profile: "Perfil",
   faculty: "Facultades",
   entidades: "Entidades",
+  program: "Programas Académicos",
+  servicios: "Servicios",
 };
 export const CHART_COLORS = [
   "#6366F1", // Indigo
@@ -178,8 +233,9 @@ export interface Project {
   faculty?: {
     name?: string;
     code?: string;
+    decano ?: { _id: string, firstName: string; firstLastName: string}
   } | null;
-  createdBy?: { _id?: string } | string;
+  createdBy?: { _id: string, firstName: string, firstLastName: string } | string;
   typeProject?: "Remunerado" | "Solidario" | string;
   year?: number | string;
   semester?: string | number;
@@ -191,6 +247,12 @@ export interface Project {
   impacts?: ProjectImpact[];
   entity?: ProjectEntityRef[];
   documents?: ProjectDocument[];
+  program?: {
+    name?: string;
+    code?: string;
+    director?: { _id: string; firstName: string; firstLastName: string };
+  } | null;
+  totalValue?: number;
 }
 
 export interface ProjectsTableProps {
@@ -335,3 +397,14 @@ export const poblacionGrupo = [
   { label: "Entidades gubernamentales", value: "gubernamentales" },
   { label: "Otro", value: "otro" },
 ];
+
+export const statusFlow = [
+  "en_formulacion",
+  "en_revision_director",
+  "en_revision_decano",
+  "en_revision_fries",
+  "en_revision_vicerrectoria",
+  "aprobado",
+  "rechazado",
+];
+

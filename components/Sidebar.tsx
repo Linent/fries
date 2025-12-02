@@ -28,27 +28,28 @@ type SidebarItem = {
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[] | null>(null);
 
   const router = useRouter();
 
-  // 📦 Obtener rol del usuario
+  // 📦 Obtener roles del usuario
   useEffect(() => {
     const tokenData = getTokenPayload();
-    if (tokenData?.role) setUserRole(tokenData.role);
+    if (tokenData?.roles) setUserRoles(tokenData.roles);
   }, []);
 
   const toggleMenu = (menu: string) => {
     setOpenMenu(openMenu === menu ? null : menu);
   };
 
+  // 🔍 Filtrar ítems por roles múltiples
   const visibleItems: SidebarItem[] = siteConfig.sidebarItems.filter(
-    (item: SidebarItem) => !userRole || item.roles.includes(userRole)
+    (item: SidebarItem) =>
+      !userRoles || item.roles.some((role) => userRoles.includes(role))
   );
 
   return (
     <>
-      {/* Sidebar con transición */}
       <aside
         className={`fixed top-0 left-0 h-full w-64 bg-gradient-to-b from-red-600 to-red-700 text-white flex flex-col z-40 transform transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -71,10 +72,14 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 (Icons as Record<string, any>)[item.icon || "FileText"] ||
                 Icons.FileText;
 
+              // 📁 Si tiene subitems
               if (item.subItems && item.subItems.length > 0) {
                 const visibleSubItems = item.subItems.filter(
-                  (sub) => !userRole || sub.roles.includes(userRole)
+                  (sub) =>
+                    !userRoles ||
+                    sub.roles.some((role) => userRoles.includes(role))
                 );
+
                 if (visibleSubItems.length === 0) return null;
 
                 return (
@@ -113,6 +118,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                 );
               }
 
+              // 🔗 No tiene subItems
               return (
                 <li key={item.label}>
                   <Link

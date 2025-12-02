@@ -1,9 +1,6 @@
 "use client";
 
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Table,
   TableHeader,
@@ -21,11 +18,11 @@ import {
   Pagination,
   DateRangePicker,
   Alert,
-  // MODIFICADO: Importa SortDescriptor y Selection para tipado
   SortDescriptor,
   Selection,
 } from "@heroui/react";
 import { Spinner } from "@heroui/spinner";
+
 import ProjectModal from "@/components/ProyectExtension/ProjectModal";
 import {
   ChevronDownIcon,
@@ -36,37 +33,65 @@ import {
   DownloadIcon,
   RefreshCcwIcon,
 } from "@/components/icons";
-import { useRouter } from "next/router";
+
+import { useRouter } from "next/navigation";
 import { getTokenPayload } from "@/utils/auth";
 import { projectStatusMap, Project, ProjectsTableProps } from "@/types";
-import { fetchMyProjects } from "@/services/proyectServices";
+import { useProjectExport } from "@/components/ProyectExtension/hooks/useProjectExport";
 
-// ──────────────────────────────────────────────────────────────
-// Helpers de permisos (Sin cambios)
-// ──────────────────────────────────────────────────────────────
-const canEditProject = (project: Project, role?: string, userId?: string) => {
-  if (!role) return false;
-  if (role === "administrador") return true;
+// ─────────────────────────────────────────────
+// 🧠 LOGICA DE PERMISOS
+// ─────────────────────────────────────────────
+const canEditProject = (
+  project: Project,
+  roles: string[] = [],
+  userId?: string
+) => {
+  if (roles.includes("administrador")) return true;
+  if (roles.includes("fries")) return true;
 
-  if (role === "fries") {
-    // FRIES solo edita cuando está en formulación
-    return project.status === "en_formulacion";
-  }
-
-  if (role === "formulador") {
-    // El formulador edita SOLO sus proyectos y SOLO en formulación
+  if (roles.includes("formulador")) {
     const owner =
-      (project as any)?.createdBy?._id === userId ||
-      (project as any)?.createdBy === userId;
+      (typeof project.createdBy === 'object' && project.createdBy?._id === userId) || project.createdBy === userId;
     return owner && project.status === "en_formulacion";
   }
+
   return false;
 };
 
-// ──────────────────────────────────────────────────────────────
-// Constantes para filtros
-// ──────────────────────────────────────────────────────────────
-// Asume que projectStatusMap está definido en @/types
+// ─────────────────────────────────────────────
+// 🎯 FILTRADO GLOBAL POR ROLES
+// ─────────────────────────────────────────────
+function filterByUserRoles(projects: Project[]): Project[] {
+  const user = getTokenPayload();
+  const userId = user?.id;
+  const roles: string[] = user?.roles ?? [];
+
+  return projects.filter((project) => {
+    if (roles.includes("administrador")) return true;
+    if (roles.includes("fries")) return true;
+
+    if (roles.includes("formulador")) {
+      return (typeof project.createdBy === 'object' && project.createdBy?._id === userId) || project.createdBy === userId;
+    }
+
+    if (roles.includes("decano")) {
+      const isDecano = (project as any).faculty?.decano?._id === userId;
+      const isReview = project.status === "en_revision_decano";
+      return isDecano || isReview;
+    }
+
+    if (roles.includes("director_programa")) {
+      const isDirector = (project as any).program?.director?._id === userId;
+      const isReview = project.status === "en_revision_director";
+      return isDirector || isReview;
+    }
+
+    return false;
+  });
+}
+
+// Opciones de filtros
 const statusOptions = Object.entries(projectStatusMap).map(
   ([key, { label }]) => ({
     key,
@@ -77,75 +102,62 @@ const statusOptions = Object.entries(projectStatusMap).map(
 const projectTypeOptions = [
   { key: "Remunerado", label: "Remunerado" },
   { key: "Solidarío", label: "Solidarío" },
-  // Añade más tipos si es necesario
 ];
 
-// ──────────────────────────────────────────────────────────────
-// Componente principal
-// ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 📌 COMPONENTE PRINCIPAL
+// ─────────────────────────────────────────────
 export default function ProjectsTableAdvanced({
   projects,
   loading,
   onCreate,
 }: ProjectsTableProps) {
   const router = useRouter();
+  const user = getTokenPayload();
+  const roles = user?.roles ?? [];
+  const userId = user?.id;
+
+  // Hook de exportación
+  const { exportToExcel, exportToPDF, message } = useProjectExport();
+
+  // Estado UI
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [filterValue, setFilterValue] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [dateRange, setDateRange] = useState<{ start?: Date; end?: Date }>({});
-  const [projectList, setProjectList] = useState<Project[]>(projects);
-  
-  // ------------------------------------------------------------
-  // NUEVO: Estados para los filtros de Dropdown
-  // ------------------------------------------------------------
   const [statusFilter, setStatusFilter] = useState<Selection>(new Set([]));
   const [typeFilter, setTypeFilter] = useState<Selection>(new Set([]));
-
-  // ------------------------------------------------------------
-  // MODIFICADO: Estado unificado para el ordenamiento
-  // ------------------------------------------------------------
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: "createdAt",
     direction: "descending",
   });
 
-  const [message, setMessage] = useState<{
-    type: "success" | "danger";
-    text: string;
-  } | null>(null);
-
-  const user = getTokenPayload();
-  const role = user?.role as string | undefined;
-  const userId = (user as any)?._id || (user as any)?.id;
-  const isPrivileged = ["administrador", "fries"].includes(role || "");
-
-  // 🔁 Actualiza lista si cambian las props
-  useEffect(() => {
-  const load = async () => {
-    const data = await fetchMyProjects();
-    setProjectList(data);
-  };
-  load();
-}, []);
-
-  // 🧩 IDs únicos
-  const sanitizedProjects = useMemo(
-    () =>
-      projectList.map((p, index) => ({
-        ...p,
-        id: (p as any)._id || (p as any).id || `${p.code || "proj"}-${index}`,
-      })),
-    [projectList]
+  const isPrivileged = roles.some((r) =>
+    ["administrador", "fries"].includes(r)
   );
 
-  // ------------------------------------------------------------
-  // MODIFICADO: `filteredProjects` ahora solo filtra, no ordena.
-  // ------------------------------------------------------------
+  // Proyectos permitidos por rol
+  const allowedProjects = useMemo(
+    () => filterByUserRoles(projects),
+    [projects]
+  );
+
+  // IDs únicos
+  const sanitizedProjects = useMemo(
+    () =>
+      allowedProjects.map((p, index) => ({
+        ...p,
+        id: p._id || `${p.code}-${index}`,
+      })),
+    [allowedProjects]
+  );
+
+  // FILTROS VISUALES
   const filteredProjects = useMemo(() => {
     let data = [...sanitizedProjects];
 
-    // Filtro de texto
+    // texto
     if (filterValue) {
       const q = filterValue.toLowerCase();
       data = data.filter(
@@ -154,7 +166,7 @@ export default function ProjectsTableAdvanced({
       );
     }
 
-    // Filtro de rango de fechas
+    // fechas
     if (dateRange.start && dateRange.end) {
       data = data.filter((p) => {
         const d = new Date(p.createdAt);
@@ -162,66 +174,45 @@ export default function ProjectsTableAdvanced({
       });
     }
 
-    // NUEVO: Filtro por Estado
-    if (statusFilter !== "all" && statusFilter.size > 0) {
-      data = data.filter((p) => statusFilter.has(p.status));
+    // estado
+    if (statusFilter !== "all" && (statusFilter as Set<string>).size > 0) {
+      const set = statusFilter as Set<string>;
+      data = data.filter((p) => set.has(p.status));
     }
 
-    // NUEVO: Filtro por Tipo de Proyecto (asumiendo que el dato existe)
-    if (typeFilter !== "all" && typeFilter.size > 0) {
-      data = data.filter((p) => typeFilter.has((p as any).typeProject));
+    // tipo
+    if (typeFilter !== "all" && (typeFilter as Set<string>).size > 0) {
+      const set = typeFilter as Set<string>;
+      data = data.filter((p) => set.has(p.typeProject || ""));
     }
 
     return data;
   }, [filterValue, dateRange, statusFilter, typeFilter, sanitizedProjects]);
 
-  // ------------------------------------------------------------
-  // NUEVO: `sortedItems` se encarga del ordenamiento.
-  // ------------------------------------------------------------
+  // ORDENAMIENTO
   const sortedItems = useMemo(() => {
     return [...filteredProjects].sort((a, b) => {
-      const key = sortDescriptor.column as keyof Project | "faculty";
-      let cmp: number;
+      const key = sortDescriptor.column as keyof Project;
+      const first = (a as any)[key];
+      const second = (b as any)[key];
 
-      let first: any;
-      let second: any;
-
-      // Manejo especial para 'faculty' que es un objeto anidado
-      if (key === "faculty") {
-        first = (a as any).faculty?.name || "";
-        second = (b as any).faculty?.name || "";
-        cmp = first.localeCompare(second);
-      } else {
-        first = (a as any)[key];
-        second = (b as any)[key];
-
-        if (key === "createdAt") {
-          cmp = new Date(first).getTime() - new Date(second).getTime();
-        } else {
-          // Ordenamiento genérico para texto/números
-          cmp = (first || "") < (second || "") ? -1 : 1;
-          if (typeof first === "string" && typeof second === "string") {
-            cmp = first.localeCompare(second);
-          }
-        }
+      if (sortDescriptor.direction === "descending") {
+        return first > second ? -1 : 1;
       }
-
-      return sortDescriptor.direction === "descending" ? -cmp : cmp;
+      return first > second ? 1 : -1;
     });
   }, [filteredProjects, sortDescriptor]);
 
-  // ------------------------------------------------------------
-  // MODIFICADO: Paginación basada en `sortedItems` y `filteredProjects`
-  // ------------------------------------------------------------
-  const pages = Math.ceil(filteredProjects.length / rowsPerPage);
+  // PAGINACIÓN
+  const pages = Math.ceil(filteredProjects.length / rowsPerPage) || 1;
   const start = (page - 1) * rowsPerPage;
   const items = sortedItems.slice(start, start + rowsPerPage);
 
-  // 🎨 Estado visual (Sin cambios)
+  // RENDER ESTADO
   const renderStatus = (status: string) => {
     const s = projectStatusMap[status] || {
       label: status,
-      color: "bg-gray-100 text-gray-700",
+      color: "bg-gray-200 text-gray-700",
     };
     return (
       <Chip className={`capitalize ${s.color}`} size="sm" variant="flat">
@@ -230,176 +221,7 @@ export default function ProjectsTableAdvanced({
     );
   };
 
-  // 📄 Exportar (Sin cambios, pero podrías querer exportar `filteredProjects` en lugar de `projectList`)
-  const handleExportExcel = () => {
-  if (!projectList.length) {
-    setMessage({ type: "danger", text: "No hay datos para exportar." });
-    setTimeout(() => setMessage(null), 2000);
-    return;
-  }
-
-  // --- Función para aplanar objetos y arrays ---
-  const flattenField = (value:any) => {
-    if (!value) return "";
-
-    // Si es array
-    if (Array.isArray(value)) {
-      return value
-        .map((item) =>
-          typeof item === "object"
-            ? Object.values(item).join(" ")
-            : String(item)
-        )
-        .join(", ");
-    }
-
-    // Si es objeto
-    if (typeof value === "object") {
-      return Object.entries(value)
-        .map(([k, v]) => `${k}: ${v}`)
-        .join(", ");
-    }
-
-    return value;
-  };
-
-  const excelData = projectList.map((p) => ({
-    Código: p.code,
-    Título: p.title,
-    Tipo: p.typeProject,
-    Año: p.year,
-    Semestre: p.semester,
-    Estado: projectStatusMap[p.status]?.label || p.status,
-    Facultad: p.faculty?.name || "Sin facultad",
-
-    // Director del proyecto
-    Director: p?.director
-      ? `${p.director.firstName} ${p.director.firstLastName} (${p.director.email})`
-      : "Sin director",
-
-    // Coautores
-    Coautores: p.coauthors
-      ?.map((c) => `${c.firstName} ${c.firstLastName} (${c.email})`)
-      .join(", ") || "Ninguno",
-
-    // Estudiantes
-    Estudiantes: p.students
-      ?.map((s) => `${s.firstName} ${s.firstLastName} (${s.email})`)
-      .join(", ") || "Ninguno",
-
-    // Poblaciones estructuradas
-    "Ciclo Vital": p.populations?.ciclo_vital
-      ?.map((cv) => `${cv.name}: ${cv.numberOfPeople}`)
-      .join(", ") || "",
-
-    Condición: p.populations?.condicion
-      ?.map((c) => `${c.name}: ${c.numberOfPeople}`)
-      .join(", ") || "",
-
-    Grupo: p.populations?.grupo
-      ?.map((g) => `${g.name}: ${g.numberOfPeople}`)
-      .join(", ") || "",
-
-    // Resultados
-    Resultados: p.results
-      ?.map((r) => `${r.product} - Indicador: ${r.indicator}`)
-      .join(" | ")
-      .trim() || "",
-
-    // Impactos
-    Impactos: p.impacts
-      ?.map((i) => `${i.expectedImpact} (${i.term})`)
-      .join(" | ") || "",
-
-    // Entidades
-    Entidades: p.entity
-      ?.map((e) => `${e.entity?.name} (${e.entity?.typeEntity})`)
-      .join(", ") || "",
-
-    // Documentos
-    Documentos: p.documents
-      ?.map((d) => `${d.name} (${d.type})`)
-      .join(", ") || "",
-
-    Descripción: p.description || "",
-    Justificación: p.justification || "",
-    ObjetivoGeneral: p.objectiveGeneral || "",
-
-    FechaCreación: new Date(p.createdAt).toLocaleString("es-CO"),
-  }));
-
-  const worksheet = XLSX.utils.json_to_sheet(excelData);
-  const workbook = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Proyectos Extensión");
-  XLSX.writeFile(workbook, "proyectos-extension-completo.xlsx");
-
-  setMessage({
-    type: "success",
-    text: "Archivo Excel generado correctamente.",
-  });
-
-  setTimeout(() => setMessage(null), 2000);
-};
-
-  const handleExportPDF = () => {
-  if (!projectList.length) {
-    setMessage({ type: "danger", text: "No hay datos para exportar." });
-    setTimeout(() => setMessage(null), 2000);
-    return;
-  }
-
-  const doc = new jsPDF({
-    orientation: "landscape",
-    unit: "pt",
-    format: "A4",
-  });
-
-  doc.setFontSize(14);
-  doc.text("Reporte de Proyectos de Extensión", 40, 40);
-
-  const username = (user as any)?.name || "Usuario";
-  const date = new Date().toLocaleString("es-CO");
-  doc.setFontSize(10);
-  doc.text(`Generado por: ${username}`, 40, 55);
-  doc.text(`Fecha: ${date}`, 40, 70);
-
-  const body = projectList.map((p) => [
-    p.code || "",
-    p.title || "",
-    projectStatusMap[p.status]?.label || p.status,
-    (p as any).faculty?.name || "Sin facultad",
-    new Date(p.createdAt).toLocaleDateString("es-CO"),
-  ]);
-
-  autoTable(doc, {
-    startY: 90,
-    head: [["Código", "Título", "Estado", "Facultad", "Fecha"]],
-    body,
-    styles: { fontSize: 8, cellPadding: 3 },
-    headStyles: { fillColor: [200, 0, 0], textColor: [255, 255, 255] },
-    alternateRowStyles: { fillColor: [245, 245, 245] },
-    margin: { left: 40, right: 40 },
-  });
-
-  doc.save("proyectos-extension.pdf");
-
-  setMessage({ type: "success", text: "PDF generado correctamente." });
-
-  // Ocultar después de 2 segundos
-  setTimeout(() => setMessage(null), 2000);
-};
-
-
-  // 🆕 Nuevo proyecto desde modal (Sin cambios)
-  const handleCreateProject = (created: Project) => {
-    setProjectList((prev) => [created, ...prev]);
-    setMessage({ type: "success", text: "Proyecto creado exitosamente." });
-  };
-
-  // ------------------------------------------------------------
-  // MODIFICADO: `renderCell` con el nuevo `typeProject`
-  // ------------------------------------------------------------
+  // CELDAS
   const renderCell = useCallback(
     (project: Project, columnKey: string) => {
       switch (columnKey) {
@@ -407,33 +229,24 @@ export default function ProjectsTableAdvanced({
           return <p className="font-medium">{project.code}</p>;
         case "title":
           return <p className="font-medium">{project.title}</p>;
-        // NUEVO: Render para el tipo de proyecto
         case "typeProject":
-          return <p>{(project as any).typeProject || "No definido"}</p>;
+          return <p>{project.typeProject || "No definido"}</p>;
         case "status":
           return renderStatus(project.status);
         case "faculty":
           return <p>{(project as any).faculty?.name || "Sin facultad"}</p>;
         case "createdAt":
-          return (
-            <span>
-              {new Date(project.createdAt).toLocaleDateString("es-CO", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
-            </span>
-          );
+          return new Date(project.createdAt).toLocaleDateString("es-CO");
         case "actions": {
-          const projectId = (project as any)._id || (project as any).id;
-          const editable = canEditProject(project, role, userId);
+          const projectId = project._id;
+          const editable = canEditProject(project, roles, userId);
 
           return (
             <div className="flex justify-center">
               <Dropdown>
                 <DropdownTrigger>
                   <Button isIconOnly size="sm" variant="light">
-                    <VerticalDotsIcon className="text-default-300" />
+                    <VerticalDotsIcon />
                   </Button>
                 </DropdownTrigger>
                 <DropdownMenu>
@@ -449,17 +262,6 @@ export default function ProjectsTableAdvanced({
                   >
                     {editable ? "Editar" : "Ver detalle"}
                   </DropdownItem>
-                  {isPrivileged && !editable ? (
-                    <DropdownItem
-                      key="edit-force"
-                      color="primary"
-                      onPress={() =>
-                        router.push(`/extension/${projectId}?mode=edit`)
-                      }
-                    >
-                      Intentar editar
-                    </DropdownItem>
-                  ) : null}
                 </DropdownMenu>
               </Dropdown>
             </div>
@@ -469,16 +271,17 @@ export default function ProjectsTableAdvanced({
           return (project as any)[columnKey];
       }
     },
-    [role, userId, isPrivileged, router]
+    [roles, userId, router]
   );
 
-  // ------------------------------------------------------------
-  // MODIFICADO: `topContent` con los nuevos filtros
-  // ------------------------------------------------------------
+  // HANDLERS DE EXPORTACIÓN (usan el hook)
+  const handleExportExcel = () => exportToExcel(filteredProjects);
+  const handleExportPDF = () => exportToPDF(filteredProjects);
+
+  // TOP CONTENT (filtros + acciones)
   const topContent = (
     <div className="flex flex-col gap-3 mb-4">
       <div className="flex flex-wrap gap-3 justify-between items-center">
-        {/* --- Fila 1: Búsqueda y Fecha --- */}
         <Input
           isClearable
           placeholder="Buscar por código o título..."
@@ -501,13 +304,15 @@ export default function ProjectsTableAdvanced({
       </div>
 
       <div className="flex flex-wrap gap-2 justify-between items-center">
-        {/* --- Fila 2: Filtros Dropdown --- */}
-        <div className="flex gap-2">
+        {/* Filtros de estado / tipo / limpiar */}
+        <div className="flex gap-2 flex-wrap">
           <Dropdown>
             <DropdownTrigger>
               <Button variant="flat" endContent={<ChevronDownIcon />}>
                 Estado
-                {statusFilter !== "all" && statusFilter.size > 0 && ` (${statusFilter.size})`}
+                {statusFilter !== "all" &&
+                  (statusFilter as Set<string>).size > 0 &&
+                  ` (${(statusFilter as Set<string>).size})`}
               </Button>
             </DropdownTrigger>
             <DropdownMenu
@@ -526,7 +331,9 @@ export default function ProjectsTableAdvanced({
             <DropdownTrigger>
               <Button variant="flat" endContent={<ChevronDownIcon />}>
                 Tipo
-                {typeFilter !== "all" && typeFilter.size > 0 && ` (${typeFilter.size})`}
+                {typeFilter !== "all" &&
+                  (typeFilter as Set<string>).size > 0 &&
+                  ` (${(typeFilter as Set<string>).size})`}
               </Button>
             </DropdownTrigger>
             <DropdownMenu
@@ -541,8 +348,8 @@ export default function ProjectsTableAdvanced({
             </DropdownMenu>
           </Dropdown>
 
-           <Button
-             color="default"
+          <Button
+            color="default"
             variant="flat"
             startContent={<RefreshCcwIcon />}
             onPress={() => {
@@ -550,16 +357,18 @@ export default function ProjectsTableAdvanced({
               setDateRange({});
               setStatusFilter(new Set([]));
               setTypeFilter(new Set([]));
-              setSortDescriptor({ column: "createdAt", direction: "descending" });
-              setMessage(null);
+              setSortDescriptor({
+                column: "createdAt",
+                direction: "descending",
+              });
             }}
           >
             Limpiar filtros
           </Button>
         </div>
 
-        {/* --- Fila 2: Botones de Acción --- */}
-        <div className="flex gap-2">
+        {/* Acciones: exportar + nuevo */}
+        <div className="flex gap-2 flex-wrap">
           {isPrivileged && (
             <>
               <Button
@@ -593,7 +402,9 @@ export default function ProjectsTableAdvanced({
             </>
           )}
 
-          {["administrador", "fries", "formulador"].includes(role || "") && (
+          {roles.some((r) =>
+            ["administrador", "fries", "formulador"].includes(r)
+          ) && (
             <Button
               color="primary"
               endContent={<PlusIcon />}
@@ -612,29 +423,28 @@ export default function ProjectsTableAdvanced({
       )}
 
       <div className="flex justify-end text-sm text-gray-500">
-        {/* MODIFICADO: Muestra el total de items filtrados */}
         Mostrando {items.length} de {filteredProjects.length} proyectos
       </div>
     </div>
   );
 
-  // ------------------------------------------------------------
-  // `bottomContent` (Sin cambios)
-  // ------------------------------------------------------------
   const bottomContent = (
     <div className="flex justify-between items-center py-2 px-2">
       <Pagination
         showControls
         color="primary"
         page={page}
-        total={pages || 1}
+        total={pages}
         onChange={setPage}
       />
       <label className="flex items-center text-sm text-gray-500">
         Filas por página:
         <select
           className="ml-2 bg-transparent outline-none text-gray-700"
-          onChange={(e) => setRowsPerPage(Number(e.target.value))}
+          onChange={(e) => {
+            setRowsPerPage(Number(e.target.value));
+            setPage(1);
+          }}
           value={rowsPerPage}
         >
           <option value={5}>5</option>
@@ -649,9 +459,6 @@ export default function ProjectsTableAdvanced({
 
   return (
     <>
-      {/* ------------------------------------------------------------ */}
-      {/* MODIFICADO: Table ahora usa sortDescriptor y onSortChange */}
-      {/* ------------------------------------------------------------ */}
       <Table
         aria-label="Tabla avanzada de proyectos de extensión"
         topContent={topContent}
@@ -662,7 +469,6 @@ export default function ProjectsTableAdvanced({
         onSortChange={setSortDescriptor}
       >
         <TableHeader>
-          {/* MODIFICADO: Columnas con `allowsSorting` */}
           <TableColumn key="code" allowsSorting>
             Código
           </TableColumn>
@@ -704,11 +510,10 @@ export default function ProjectsTableAdvanced({
         </TableBody>
       </Table>
 
-      {/* Modal para crear proyecto (Sin cambios) */}
       <ProjectModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onCreate={handleCreateProject}
+        onCreate={onCreate}
       />
     </>
   );

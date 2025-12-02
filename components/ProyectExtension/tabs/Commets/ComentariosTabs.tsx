@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardBody,
   Button,
-  Input,
   Alert,
   Switch,
   Textarea,
@@ -24,7 +23,7 @@ export default function ComentariosTab({
   project,
   editable,
 }: {
-  project: { _id: string };
+  project: { _id: string; status: string };
   editable: boolean;
 }) {
   const [comments, setComments] = useState<any[]>([]);
@@ -33,10 +32,58 @@ export default function ComentariosTab({
   const [loading, setLoading] = useState(false);
   const didRun = useRef(false);
 
+  // ---------------------------------------------------------
+  // 🔐 Obtener usuario con roles múltiples
+  // ---------------------------------------------------------
   const user = getTokenPayload();
   const myId = user?.id;
-  const myRole = user?.role;
+  const myRoles: string[] = Array.isArray(user?.roles) ? user.roles : [];
 
+  const isRole = (role: string) => myRoles?.includes(role);
+
+  // ---------------------------------------------------------
+  // 🔐 Permisos globales para comentar según estado
+  // ---------------------------------------------------------
+  const state = project?.status;
+
+  const canComment = (() => {
+    if (isRole("fries") || isRole("administrador")) return true; // siempre pueden
+
+    if (isRole("formulador")) return false; // nunca comenta
+
+    if (isRole("director_programa"))
+      return state === "en_revision_director";
+
+    if (isRole("decano"))
+      return state === "en_revision_decano";
+
+    if (isRole("vicerrectoria"))
+      return state === "en_revision_vicerrectoria";
+
+    return false;
+  })();
+
+  const commentReason = (() => {
+    if (canComment) return null;
+
+    if (isRole("formulador"))
+      return "Los formuladores no pueden agregar comentarios.";
+
+    if (isRole("director_programa"))
+      return "Este proyecto no está en revisión del director. No puedes comentar ahora.";
+
+    if (isRole("decano"))
+      return "Este proyecto no está en revisión del decano. No puedes comentar ahora.";
+
+    if (isRole("vicerrectoria"))
+      return "Solo puedes comentar cuando el proyecto esté en revisión de Vicerrectoría.";
+
+    return "No tienes permisos para agregar comentarios.";
+  })();
+
+  // ---------------------------------------------------------
+  // 🔄 Cargar comentarios
+  // ---------------------------------------------------------
   const load = async () => {
     try {
       setLoading(true);
@@ -56,6 +103,9 @@ export default function ComentariosTab({
     }
   }, []);
 
+  // ---------------------------------------------------------
+  // ➕ AGREGAR COMENTARIO
+  // ---------------------------------------------------------
   const handleAdd = async () => {
     if (!text.trim()) return;
 
@@ -69,6 +119,9 @@ export default function ComentariosTab({
     }
   };
 
+  // ---------------------------------------------------------
+  // 👁 Cambio de visibilidad (solo FRIES)
+  // ---------------------------------------------------------
   const handleToggleVisibility = async (comment: any, visible: boolean) => {
     try {
       await updateProjectComment(comment._id, {
@@ -81,6 +134,9 @@ export default function ComentariosTab({
     }
   };
 
+  // ---------------------------------------------------------
+  // 🗑 ELIMINAR COMENTARIO
+  // ---------------------------------------------------------
   const handleDelete = async (id: string) => {
     if (!confirm("¿Eliminar comentario?")) return;
 
@@ -93,12 +149,18 @@ export default function ComentariosTab({
     }
   };
 
+  // ---------------------------------------------------------
+  // 🖼️ RENDER
+  // ---------------------------------------------------------
   return (
     <div className="p-6 space-y-4">
+
       {msg && <Alert color={msg.type}>{msg.text}</Alert>}
 
-      {/* AGREGAR COMENTARIO */}
-      {editable && (
+      {/* ---------------------------------------------------------------- */}
+      {/* AGREGAR COMENTARIO (solo si permitido) */}
+      {/* ---------------------------------------------------------------- */}
+      {canComment ? (
         <Card shadow="sm" className="border border-gray-200">
           <CardHeader>Agregar comentario</CardHeader>
           <CardBody className="space-y-3">
@@ -117,18 +179,23 @@ export default function ComentariosTab({
             </Button>
           </CardBody>
         </Card>
+      ) : (
+        <Alert color="warning" variant="flat">
+          {commentReason}
+        </Alert>
       )}
 
+      {/* ---------------------------------------------------------------- */}
       {/* LISTA DE COMENTARIOS */}
+      {/* ---------------------------------------------------------------- */}
       <div className="space-y-4">
         {comments.map((c) => {
           const isAuthor = c.author?._id === myId;
-          const canDelete =
-            myRole === "administrador" ||
-            isAuthor ||
-            myRole === "fries";
 
-          const canToggle = myRole === "fries";
+          const canDelete =
+            isRole("administrador") || isRole("fries") || isAuthor;
+
+          const canToggle = isRole("fries");
 
           return (
             <Card
@@ -142,24 +209,23 @@ export default function ComentariosTab({
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-500">
                     {c.author?.firstName} {c.author?.firstLastName} —{" "}
-                    {new Date(c.createdAt).toLocaleString()}
+                    {new Date(c.createdAt).toLocaleString("es-CO")}
                   </p>
 
                   <div className="flex gap-2 items-center">
-                    {/* SWITCH VISIBILIDAD (FRIES) */}
+
+                    {/* 👁 Cambiar visibilidad (solo FRIES) */}
                     {canToggle && (
                       <Switch
                         color="primary"
                         isSelected={c.visibleToFormulator}
-                        onValueChange={(v) =>
-                          handleToggleVisibility(c, v)
-                        }
+                        onValueChange={(v) => handleToggleVisibility(c, v)}
                       >
                         Visible
                       </Switch>
                     )}
 
-                    {/* ELIMINAR */}
+                    {/* 🗑 Eliminar */}
                     {canDelete && (
                       <Button
                         size="sm"

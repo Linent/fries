@@ -36,6 +36,9 @@ export default function Topbar({
   const [userImage, setUserImage] = useState(DEFAULT_IMAGE);
 
   const tokenUser = getTokenPayload();
+  const roles: string[] = tokenUser?.roles ?? [];
+  const isRestrictedUser =
+    !roles.includes("fries") && !roles.includes("administrador");
 
   useEffect(() => {
     if (!tokenUser?.id) return;
@@ -70,13 +73,17 @@ export default function Topbar({
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("roles");
+    localStorage.removeItem("userName");
     router.push("/");
   };
 
   return (
-    <HeroUINavbar className="flex items-end justify-between bg-white shadow px-4 py-3 md:px-6 w-full"
-  maxWidth="full"
-  position="sticky">
+    <HeroUINavbar
+      className="flex items-end justify-between bg-white shadow px-4 py-3 md:px-6 w-full"
+      maxWidth="full"
+      position="sticky"
+    >
       <div className="flex items-center gap-4">
         <button
           onClick={toggleSidebar}
@@ -86,11 +93,24 @@ export default function Topbar({
         </button>
 
         <Breadcrumbs>
-          {breadcrumbs.map((bc) => (
-            <BreadcrumbItem key={bc.href} href={bc.href}>
-              {bc.label}
-            </BreadcrumbItem>
-          ))}
+          {breadcrumbs.map((bc) => {
+            const isUserBreadcrumb = bc.href === "/user";
+            const disabled = isUserBreadcrumb && isRestrictedUser;
+
+            return (
+              <BreadcrumbItem
+                key={bc.href}
+                href={disabled ? undefined : bc.href}
+                className={
+                  disabled
+                    ? "text-gray-400 cursor-not-allowed pointer-events-none"
+                    : ""
+                }
+              >
+                {bc.label}
+              </BreadcrumbItem>
+            );
+          })}
         </Breadcrumbs>
       </div>
 

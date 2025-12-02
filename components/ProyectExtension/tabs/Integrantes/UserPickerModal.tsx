@@ -20,6 +20,7 @@ import {
   Select,
   SelectItem,
 } from "@heroui/react";
+
 import debounce from "lodash.debounce";
 import { getUsers } from "@/services/userServices";
 import { getProjectMembers } from "@/services/projectMemberService";
@@ -28,7 +29,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (userId: string) => void;
-  fixedRole: "director" | "coautor" | "estudiante" | null;
+  fixedRole: "director" | "coautor" | "estudiante";
   projectId?: string;
 }
 
@@ -45,29 +46,46 @@ export default function UserPickerModal({
     coauthors: [],
     students: [],
   });
+
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
 
-  // 🔹 Cargar todos los usuarios
+  // ---------------------------------------------------
+  // 🔥 FILTRO POR TIPO DE MODAL
+  // ---------------------------------------------------
+  const filterByRole = (data: any[]) => {
+    return data.filter((u) => {
+      const roles: string[] = u.roles ?? [];
+
+      if (fixedRole === "estudiante") {
+        return roles.includes("estudiante");
+      }
+
+      // Director o Coautor → solo docentes
+      if (fixedRole === "coautor" || fixedRole === "director") {
+        return roles.includes("docente");
+      }
+
+      return false;
+    });
+  };
+
+  // ---------------------------------------------------
+  // 🔹 Cargar usuarios (con filtro incluido)
+  // ---------------------------------------------------
   const loadUsers = async (search = query, currentPage = page) => {
     setLoading(true);
     try {
       const data = await getUsers(search);
-      let filtered = data || [];
 
-      // 🔥 FILTRO LOCAL SEGÚN LA SECCIÓN
-      if (fixedRole === "estudiante") {
-        filtered = filtered.filter((u: any) => u.role === "estudiante");
-      } else {
-        // director o coautor → mostrar todos los docentes
-        filtered = filtered.filter((u: any) => u.role === "docente");
-      }
+      const filtered = filterByRole(data || []);
 
       const start = (currentPage - 1) * rowsPerPage;
       const end = start + rowsPerPage;
+
       setUsers(filtered.slice(start, end));
       setTotalPages(Math.ceil(filtered.length / rowsPerPage));
     } catch (error) {
@@ -77,7 +95,9 @@ export default function UserPickerModal({
     }
   };
 
-  // 🔹 Cargar miembros del proyecto
+  // ---------------------------------------------------
+  // 🔹 Miembros ya vinculados
+  // ---------------------------------------------------
   const loadMembers = async () => {
     if (!projectId) return;
     try {
@@ -92,7 +112,9 @@ export default function UserPickerModal({
     }
   };
 
+  // ---------------------------------------------------
   // 🔹 Buscar con debounce
+  // ---------------------------------------------------
   const debouncedSearch = useCallback(
     debounce((value: string) => {
       setPage(1);
@@ -107,23 +129,26 @@ export default function UserPickerModal({
     debouncedSearch(value);
   };
 
-  // 🔹 Verificar si ya está vinculado
+  // ---------------------------------------------------
+  // 🔹 Validar si ya está vinculado
+  // ---------------------------------------------------
   const isAlreadyLinked = (user: any): boolean => {
     const uid = String(user._id);
+
     const inCoauthors = projectMembers.coauthors?.some((m: any) => String(m._id) === uid);
     const inStudents = projectMembers.students?.some((m: any) => String(m._id) === uid);
     const isDirector = projectMembers.director && String(projectMembers.director._id) === uid;
 
-    // ✅ Nueva lógica combinada:
-    // - Director: no puede ser otro director, pero sí coautor
-    // - Coautor: no puede repetirse como coautor, pero sí ser director
-    // - Estudiante: no puede repetirse como estudiante
     if (fixedRole === "director") return isDirector;
     if (fixedRole === "coautor") return inCoauthors;
     if (fixedRole === "estudiante") return inStudents;
+
     return false;
   };
 
+  // ---------------------------------------------------
+  // 🔹 Ejecutar cuando abra modal
+  // ---------------------------------------------------
   useEffect(() => {
     if (isOpen) {
       (async () => {
@@ -133,47 +158,43 @@ export default function UserPickerModal({
     }
   }, [isOpen, page, rowsPerPage, fixedRole]);
 
+  // ---------------------------------------------------
+  // UI
+  // ---------------------------------------------------
+  const title =
+    fixedRole === "estudiante"
+      ? "Seleccionar Estudiante"
+      : fixedRole === "director"
+      ? "Seleccionar Director"
+      : "Seleccionar Coautor";
+
   return (
     <Modal isOpen={isOpen} onOpenChange={onClose} size="3xl" scrollBehavior="inside">
       <ModalContent>
-        <ModalHeader>
-          {fixedRole === "estudiante"
-            ? "Seleccionar estudiante"
-            : "Seleccionar docente"}
-        </ModalHeader>
+        <ModalHeader>{title}</ModalHeader>
 
         <ModalBody>
           <Input
-            placeholder="Buscar por nombre o correo"
+            placeholder="Buscar por nombre o correo..."
             value={query}
             onChange={handleSearch}
           />
 
           {loading ? (
-            <div className="flex justify-center items-center py-10">
-              <Spinner color="danger" />
+            <div className="flex justify-center py-10">
+              <Spinner color="primary" />
             </div>
           ) : (
             <>
-              <Table
-                aria-label="Usuarios disponibles"
-                removeWrapper
-                className="w-full mt-3"
-                classNames={{
-                  base: "border border-gray-200 rounded-2xl shadow-sm overflow-hidden bg-white w-full",
-                  thead: "bg-gray-50 text-gray-700 text-sm font-semibold",
-                  th: "px-4 py-3 text-left",
-                  tr: "hover:bg-gray-50 transition-colors duration-200",
-                  td: "px-4 py-3 text-sm text-gray-700",
-                }}
-              >
+              <Table removeWrapper className="mt-3">
                 <TableHeader>
                   <TableColumn>Nombre</TableColumn>
                   <TableColumn>Email</TableColumn>
-                  <TableColumn>Rol</TableColumn>
-                  <TableColumn>Seleccionar</TableColumn>
+                  <TableColumn>Roles</TableColumn>
+                  <TableColumn>Acción</TableColumn>
                 </TableHeader>
-                <TableBody emptyContent="No hay resultados">
+
+                <TableBody emptyContent="No hay usuarios disponibles">
                   {users.map((user) => {
                     const alreadyLinked = isAlreadyLinked(user);
                     return (
@@ -182,21 +203,17 @@ export default function UserPickerModal({
                           {user.firstName} {user.firstLastName}
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
-                        <TableCell className="capitalize">{user.role}</TableCell>
+                        <TableCell>
+                          {user.roles?.map((r: string) => r).join(", ")}
+                        </TableCell>
                         <TableCell>
                           <Button
                             size="sm"
                             color={alreadyLinked ? "default" : "primary"}
-                            variant={alreadyLinked ? "flat" : "solid"}
                             disabled={alreadyLinked}
-                            className={
-                              alreadyLinked
-                                ? "pointer-events-none opacity-70 cursor-not-allowed"
-                                : ""
-                            }
                             onPress={() => !alreadyLinked && onSelect(user._id)}
                           >
-                            {alreadyLinked ? "Ya vinculado" : "Elegir"}
+                            {alreadyLinked ? "Ya vinculado" : "Seleccionar"}
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -205,36 +222,27 @@ export default function UserPickerModal({
                 </TableBody>
               </Table>
 
-              {/* 📑 Paginación */}
-              <div className="flex justify-between items-center mt-4 px-2 border-t border-gray-100 pt-3">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>Filas por página:</span>
-                  <Select
-                    size="sm"
-                    selectedKeys={[rowsPerPage.toString()]}
-                    onChange={(e) => {
-                      setRowsPerPage(Number(e.target.value));
-                      setPage(1);
-                    }}
-                    className="w-[90px]"
-                    aria-label="Filas por página"
-                  >
-                    {[5, 10, 15, 20].map((num) => (
-                      <SelectItem key={`${num}`} textValue={`${num}`}>
-                        {num}
-                      </SelectItem>
-                    ))}
-                  </Select>
-                  <span className="ml-3">
-                    Mostrando {users.length} de {totalPages * rowsPerPage}
-                  </span>
-                </div>
+              {/* PAGINACIÓN */}
+              <div className="flex justify-between items-center mt-4">
+                <Select
+                  size="sm"
+                  selectedKeys={[rowsPerPage.toString()]}
+                  onChange={(e) => {
+                    setRowsPerPage(Number(e.target.value));
+                    setPage(1);
+                  }}
+                  className="w-[90px]"
+                >
+                  {[5, 10, 15, 20].map((n) => (
+                    <SelectItem key={`${n}`}>{n}</SelectItem>
+                  ))}
+                </Select>
 
                 <Pagination
                   total={totalPages}
                   page={page}
                   onChange={setPage}
-                  color="danger"
+                  color="primary"
                   showControls
                 />
               </div>

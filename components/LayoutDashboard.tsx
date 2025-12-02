@@ -5,25 +5,41 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { isTokenExpired } from "@/utils/auth";
+import { isTokenExpired, getTokenPayload } from "@/utils/auth";
 
 export default function LayoutDashboard({
   children,
-  headerTitle, // 👈 nuevo prop
+  headerTitle,
 }: {
   children: React.ReactNode;
-  headerTitle?: string; 
+  headerTitle?: string;
 }) {
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  // --------------------------------------------------------
+  // 🔐 Validación del token (mejorada)
+  // --------------------------------------------------------
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    if (token && isTokenExpired()) {
-      localStorage.removeItem("token");
+    // ⛔ No existe el token → al login
+    if (!token) {
       router.push("/");
+      return;
     }
+
+    // ⛔ Token expirado → limpiar y salir
+    if (isTokenExpired()) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("roles");
+      localStorage.removeItem("userName");
+
+      router.push("/");
+      return;
+    }
+
+    // 👍 Token válido → no hace falta hacer nada más
   }, [router]);
 
   return (
@@ -31,7 +47,6 @@ export default function LayoutDashboard({
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
       <div className="flex flex-col flex-1 md:ml-64">
-        
         {/* 🔝 Topbar con título dinámico */}
         <div className="fixed top-0 left-0 w-full z-30 md:pl-64 bg-white">
           <Topbar

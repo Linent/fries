@@ -74,7 +74,8 @@ export default function UserEditModal({
   const [showPassword, setShowPassword] = useState(false);
 
   const auth = getTokenPayload();
-  const canEditPassword = ["administrador", "fries"].includes(auth?.role || "");
+  const userRoles: string[] = Array.isArray(auth?.roles) ? auth.roles : [];
+  const canEditPassword = userRoles.some((r) => ["administrador", "fries"].includes(r));
 
   useEffect(() => {
     if (userId) loadUser();
