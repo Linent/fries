@@ -12,11 +12,23 @@ export default function ProjectPage() {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // ✅ Ref para evitar el doble fetch causado por React Strict Mode en desarrollo
+  // Evitar doble fetch por StrictMode
   const didRun = useRef(false);
 
+  const fetchProjects = async () => {
+    try {
+      setLoading(true);
+      const data = await getProjects();
+      setProjects(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Error cargando proyectos:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (didRun.current) return; // evita ejecutar 2 veces
+    if (didRun.current) return;
     didRun.current = true;
 
     const token = localStorage.getItem("token");
@@ -27,18 +39,6 @@ export default function ProjectPage() {
     }
 
     setIsAuthenticated(true);
-
-    const fetchProjects = async () => {
-      try {
-        const data = await getProjects(token);
-        setProjects(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Error cargando proyectos:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProjects();
   }, [router]);
 
@@ -49,8 +49,16 @@ export default function ProjectPage() {
       <h1 className="text-2xl font-bold text-gray-700 mb-4">
         Proyectos de Extensión
       </h1>
+
       <div className="bg-white rounded-xl shadow p-4">
-        <ProjectsTableAdvanced projects={projects} loading={loading} />
+        <ProjectsTableAdvanced
+          projects={projects}
+          loading={loading}
+          onCreate={() => {
+            // 🔥 Recargar proyectos después de crear uno nuevo
+            fetchProjects();
+          }}
+        />
       </div>
     </LayoutDashboard>
   );

@@ -54,7 +54,7 @@ export const siteConfig = {
       roles: ["administrador", "fries"],
     },
     {
-      label: "programas académicos",
+      label: "Programas académicos",
       href: "/program",
       roles: ["administrador", "fries"],
     }

@@ -3,7 +3,7 @@ import { BACKEND_URL } from "@/config";
 import { getAuthHeaders } from "@/helpers/authHelper";
 
 const projectsPath = "project";
-export const getProjects = async (token: string) => {
+export const getProjects = async () => {
   try {
     const response = await api.get(`${BACKEND_URL}/${projectsPath}`, {
       headers: getAuthHeaders(),

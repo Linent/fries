@@ -52,7 +52,9 @@ const canEditProject = (
 
   if (roles.includes("formulador")) {
     const owner =
-      (typeof project.createdBy === 'object' && project.createdBy?._id === userId) || project.createdBy === userId;
+      (typeof project.createdBy === "object" &&
+        project.createdBy?._id === userId) ||
+      project.createdBy === userId;
     return owner && project.status === "en_formulacion";
   }
 
@@ -72,7 +74,11 @@ function filterByUserRoles(projects: Project[]): Project[] {
     if (roles.includes("fries")) return true;
 
     if (roles.includes("formulador")) {
-      return (typeof project.createdBy === 'object' && project.createdBy?._id === userId) || project.createdBy === userId;
+      return (
+        (typeof project.createdBy === "object" &&
+          project.createdBy?._id === userId) ||
+        project.createdBy === userId
+      );
     }
 
     if (roles.includes("decano")) {
@@ -117,10 +123,8 @@ export default function ProjectsTableAdvanced({
   const roles = user?.roles ?? [];
   const userId = user?.id;
 
-  // Hook de exportación
   const { exportToExcel, exportToPDF, message } = useProjectExport();
 
-  // Estado UI
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [filterValue, setFilterValue] = useState("");
@@ -137,13 +141,11 @@ export default function ProjectsTableAdvanced({
     ["administrador", "fries"].includes(r)
   );
 
-  // Proyectos permitidos por rol
   const allowedProjects = useMemo(
     () => filterByUserRoles(projects),
     [projects]
   );
 
-  // IDs únicos
   const sanitizedProjects = useMemo(
     () =>
       allowedProjects.map((p, index) => ({
@@ -153,11 +155,9 @@ export default function ProjectsTableAdvanced({
     [allowedProjects]
   );
 
-  // FILTROS VISUALES
   const filteredProjects = useMemo(() => {
     let data = [...sanitizedProjects];
 
-    // texto
     if (filterValue) {
       const q = filterValue.toLowerCase();
       data = data.filter(
@@ -166,7 +166,6 @@ export default function ProjectsTableAdvanced({
       );
     }
 
-    // fechas
     if (dateRange.start && dateRange.end) {
       data = data.filter((p) => {
         const d = new Date(p.createdAt);
@@ -174,13 +173,11 @@ export default function ProjectsTableAdvanced({
       });
     }
 
-    // estado
     if (statusFilter !== "all" && (statusFilter as Set<string>).size > 0) {
       const set = statusFilter as Set<string>;
       data = data.filter((p) => set.has(p.status));
     }
 
-    // tipo
     if (typeFilter !== "all" && (typeFilter as Set<string>).size > 0) {
       const set = typeFilter as Set<string>;
       data = data.filter((p) => set.has(p.typeProject || ""));
@@ -189,7 +186,6 @@ export default function ProjectsTableAdvanced({
     return data;
   }, [filterValue, dateRange, statusFilter, typeFilter, sanitizedProjects]);
 
-  // ORDENAMIENTO
   const sortedItems = useMemo(() => {
     return [...filteredProjects].sort((a, b) => {
       const key = sortDescriptor.column as keyof Project;
@@ -203,12 +199,10 @@ export default function ProjectsTableAdvanced({
     });
   }, [filteredProjects, sortDescriptor]);
 
-  // PAGINACIÓN
   const pages = Math.ceil(filteredProjects.length / rowsPerPage) || 1;
   const start = (page - 1) * rowsPerPage;
   const items = sortedItems.slice(start, start + rowsPerPage);
 
-  // RENDER ESTADO
   const renderStatus = (status: string) => {
     const s = projectStatusMap[status] || {
       label: status,
@@ -221,7 +215,6 @@ export default function ProjectsTableAdvanced({
     );
   };
 
-  // CELDAS
   const renderCell = useCallback(
     (project: Project, columnKey: string) => {
       switch (columnKey) {
@@ -274,11 +267,9 @@ export default function ProjectsTableAdvanced({
     [roles, userId, router]
   );
 
-  // HANDLERS DE EXPORTACIÓN (usan el hook)
   const handleExportExcel = () => exportToExcel(filteredProjects);
   const handleExportPDF = () => exportToPDF(filteredProjects);
 
-  // TOP CONTENT (filtros + acciones)
   const topContent = (
     <div className="flex flex-col gap-3 mb-4">
       <div className="flex flex-wrap gap-3 justify-between items-center">
@@ -304,19 +295,15 @@ export default function ProjectsTableAdvanced({
       </div>
 
       <div className="flex flex-wrap gap-2 justify-between items-center">
-        {/* Filtros de estado / tipo / limpiar */}
+        {/* Filtros */}
         <div className="flex gap-2 flex-wrap">
           <Dropdown>
             <DropdownTrigger>
               <Button variant="flat" endContent={<ChevronDownIcon />}>
                 Estado
-                {statusFilter !== "all" &&
-                  (statusFilter as Set<string>).size > 0 &&
-                  ` (${(statusFilter as Set<string>).size})`}
               </Button>
             </DropdownTrigger>
             <DropdownMenu
-              aria-label="Filtrar por estado"
               selectionMode="multiple"
               selectedKeys={statusFilter}
               onSelectionChange={setStatusFilter}
@@ -331,13 +318,9 @@ export default function ProjectsTableAdvanced({
             <DropdownTrigger>
               <Button variant="flat" endContent={<ChevronDownIcon />}>
                 Tipo
-                {typeFilter !== "all" &&
-                  (typeFilter as Set<string>).size > 0 &&
-                  ` (${(typeFilter as Set<string>).size})`}
               </Button>
             </DropdownTrigger>
             <DropdownMenu
-              aria-label="Filtrar por tipo de proyecto"
               selectionMode="multiple"
               selectedKeys={typeFilter}
               onSelectionChange={setTypeFilter}
@@ -367,7 +350,7 @@ export default function ProjectsTableAdvanced({
           </Button>
         </div>
 
-        {/* Acciones: exportar + nuevo */}
+        {/* Acciones */}
         <div className="flex gap-2 flex-wrap">
           {isPrivileged && (
             <>
@@ -375,7 +358,6 @@ export default function ProjectsTableAdvanced({
                 color="primary"
                 variant="flat"
                 startContent={<UploadIcon />}
-                onPress={() => console.log("Carga masiva pendiente")}
               >
                 Subir CSV/XLSX
               </Button>
@@ -390,7 +372,7 @@ export default function ProjectsTableAdvanced({
                     Exportar
                   </Button>
                 </DropdownTrigger>
-                <DropdownMenu aria-label="Opciones de exportación">
+                <DropdownMenu>
                   <DropdownItem key="excel" onPress={handleExportExcel}>
                     Exportar a Excel
                   </DropdownItem>
@@ -437,6 +419,7 @@ export default function ProjectsTableAdvanced({
         total={pages}
         onChange={setPage}
       />
+
       <label className="flex items-center text-sm text-gray-500">
         Filas por página:
         <select
@@ -510,10 +493,14 @@ export default function ProjectsTableAdvanced({
         </TableBody>
       </Table>
 
+      {/* 🔥 AQUI ESTA EL FIX PARA REFRESCAR AUTOMATICAMENTE */}
       <ProjectModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onCreate={onCreate}
+        onCreate={() => {
+          setIsModalOpen(false);
+          onCreate?.(); // refresca desde Page.jsx
+        }}
       />
     </>
   );

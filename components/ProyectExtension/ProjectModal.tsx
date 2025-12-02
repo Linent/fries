@@ -218,6 +218,7 @@ export default function ProjectModal({
                     placeholder="Ingrese el título..."
                     value={formData.title}
                     onValueChange={(v) => handleChange("title", v)}
+                    required
                   />
 
                   <Textarea
@@ -228,7 +229,7 @@ export default function ProjectModal({
                     minRows={3}
                   />
 
-                  <Select
+                  <Select required
                     label="Tipo de proyecto"
                     selectedKeys={
                       formData.typeProject ? new Set([formData.typeProject]) : new Set()
@@ -236,12 +237,13 @@ export default function ProjectModal({
                     onChange={(e) => handleChange("typeProject", e.target.value)}
                   >
                     {typeProjects.map((t) => (
-                      <SelectItem key={t}>{t}</SelectItem>
+                      <SelectItem  key={t}>{t}</SelectItem>
                     ))}
                   </Select>
 
                   <div className="flex gap-3">
                     <Input
+                      required
                       type="number"
                       label="Año"
                       placeholder="Ej: 2025"

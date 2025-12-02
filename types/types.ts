@@ -258,7 +258,7 @@ export interface Project {
 export interface ProjectsTableProps {
   projects: Project[];
   loading: boolean;
-  onCreate?: (created: Project) => void;
+  onCreate?: (project?: Project) => void;
 }
 
 export interface EntityDTO {
