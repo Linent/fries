@@ -320,7 +320,7 @@ export default function IntegrantesTab({
         isOpen={openPicker}
         onClose={() => setOpenPicker(false)}
         onSelect={handleSelectUser}
-        fixedRole={role}
+        fixedRole={role!}
         projectId={project._id}
       />
 
