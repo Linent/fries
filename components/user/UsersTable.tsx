@@ -66,7 +66,12 @@ export default function UsersTable({ users, loading, onRefresh }: UsersTableProp
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const user = getTokenPayload();
-  const isPrivileged = ["administrador", "fries"].includes(user?.role || "");
+  const userRoles: string[] = Array.isArray(user?.roles)
+    ? user.roles
+    : user?.roles
+    ? [user.roles]
+    : [];
+  const isPrivileged = userRoles.some((r) => ["administrador", "fries"].includes(r));
 
   useEffect(() => {
     setUserList(users);
