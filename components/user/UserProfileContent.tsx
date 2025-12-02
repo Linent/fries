@@ -30,7 +30,6 @@ import { getFaculties } from "@/services/facultyService";
    ============================================================ */
 const ProfileSkeleton = () => (
   <div className="space-y-6">
-
     {/* Foto + texto */}
     <div className="flex items-center gap-4">
       <Skeleton className="rounded-full w-24 h-24">
@@ -65,7 +64,6 @@ const ProfileSkeleton = () => (
     <Skeleton className="rounded-lg">
       <div className="h-10 bg-default-300 rounded-lg" />
     </Skeleton>
-
   </div>
 );
 
@@ -98,7 +96,12 @@ export default function UserProfileContent({ user, loading }: any) {
 
   // Token
   const auth = getTokenPayload();
-  const isAdmin = ["administrador", "fries"].includes(auth?.role || "");
+  const userRoles: string[] = Array.isArray(auth?.roles)
+    ? auth.roles
+    : auth?.roles
+      ? [auth.roles]
+      : [];
+  const isAdmin = userRoles.some((r) => ["administrador", "fries"].includes(r));
   const isAcademic = ["estudiante", "docente"].includes(user?.role);
 
   /* ============================================================
@@ -200,7 +203,6 @@ export default function UserProfileContent({ user, loading }: any) {
      ============================================================ */
   return (
     <div className="space-y-6">
-
       {/* FOTO DE PERFIL */}
       <div className="flex items-center gap-4">
         <div className="relative w-24 h-24">
@@ -239,9 +241,17 @@ export default function UserProfileContent({ user, loading }: any) {
 
           <Input label="Código" value={formData.codigo || ""} isReadOnly />
 
-          <Input label="Tipo de documento" value={formData.tipo_documento} isReadOnly />
+          <Input
+            label="Tipo de documento"
+            value={formData.tipo_documento}
+            isReadOnly
+          />
 
-          <Input label="Número de documento" value={formData.dni || ""} isReadOnly />
+          <Input
+            label="Número de documento"
+            value={formData.dni || ""}
+            isReadOnly
+          />
 
           <Input
             label="Fecha de nacimiento"
@@ -282,43 +292,57 @@ export default function UserProfileContent({ user, loading }: any) {
           <Input
             label="Primer nombre"
             value={formData.firstName || ""}
-            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, firstName: e.target.value })
+            }
           />
 
           <Input
             label="Segundo nombre"
             value={formData.secondName || ""}
-            onChange={(e) => setFormData({ ...formData, secondName: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, secondName: e.target.value })
+            }
           />
 
           <Input
             label="Primer apellido"
             value={formData.firstLastName || ""}
-            onChange={(e) => setFormData({ ...formData, firstLastName: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, firstLastName: e.target.value })
+            }
           />
 
           <Input
             label="Segundo apellido"
             value={formData.secondLastName || ""}
-            onChange={(e) => setFormData({ ...formData, secondLastName: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, secondLastName: e.target.value })
+            }
           />
 
           <Input
             label="Celular"
             value={formData.celular || ""}
-            onChange={(e) => setFormData({ ...formData, celular: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, celular: e.target.value })
+            }
           />
 
           <Input
             label="Correo"
             type="email"
             value={formData.email || ""}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
           />
 
           <Select
             label="Estado civil"
-            selectedKeys={formData.civilStatus ? new Set([formData.civilStatus]) : new Set()}
+            selectedKeys={
+              formData.civilStatus ? new Set([formData.civilStatus]) : new Set()
+            }
             onSelectionChange={(keys) =>
               setFormData({
                 ...formData,
@@ -345,7 +369,9 @@ export default function UserProfileContent({ user, loading }: any) {
       {(isAcademic || isAdmin) && (
         <Card>
           <CardBody className="space-y-3">
-            <h3 className="font-semibold text-gray-700">Información académica</h3>
+            <h3 className="font-semibold text-gray-700">
+              Información académica
+            </h3>
 
             {isAcademic && (
               <Input
@@ -364,9 +390,7 @@ export default function UserProfileContent({ user, loading }: any) {
               <Select
                 label="Facultad"
                 selectedKeys={
-                  formData.faculty
-                    ? new Set([formData.faculty])
-                    : new Set()
+                  formData.faculty ? new Set([formData.faculty]) : new Set()
                 }
                 onSelectionChange={(keys) =>
                   setFormData({
@@ -416,7 +440,9 @@ export default function UserProfileContent({ user, loading }: any) {
 
             <Select
               label="Rol"
-              selectedKeys={formData.role ? new Set([formData.role]) : new Set()}
+              selectedKeys={
+                formData.role ? new Set([formData.role]) : new Set()
+              }
               onSelectionChange={(keys) =>
                 setFormData({ ...formData, role: Array.from(keys)[0] })
               }
