@@ -8,7 +8,6 @@ export const getProjects = async (token: string) => {
     const response = await api.get(`${BACKEND_URL}/${projectsPath}`, {
       headers: getAuthHeaders(),
     });
-    console.log(response.data);
     return response.data; // Asegúrate de que el backend devuelve un array de proyectos
   } catch (error: any) {
     console.error("Error al obtener los proyectos:", error);

@@ -11,7 +11,6 @@ export const getPrograms = async () => {
   const res = await api.get(`${BACKEND_URL}/${programsPath}`, {
     headers: getAuthHeaders(),
   });
-  console.log(res.data);
   return res.data;
 };
 export const getProgramsByFaculty = async (facultyId: string) => {

@@ -45,7 +45,7 @@ export const siteConfig = {
     {
       label: "Servicios",
       href: "/servicios",
-      roles: ["administrador", "fries", "formulador"],
+      roles: ["administrador", "fries",],
     },
 
     {
