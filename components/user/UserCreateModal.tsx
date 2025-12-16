@@ -29,7 +29,7 @@ interface Props {
 export default function UserCreateModal({ isOpen, onClose, onSuccess }: Props) {
   const [formData, setFormData] = useState<Partial<IUser>>({
     tipo_documento: "CC",
-    roles: ["formulador"]
+    roles: ["formulador"],
   });
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -99,7 +99,13 @@ export default function UserCreateModal({ isOpen, onClose, onSuccess }: Props) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} placement="center" backdrop="blur" size="2xl">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      placement="center"
+      backdrop="blur"
+      size="2xl"
+    >
       <ModalContent>
         <ModalHeader className="text-xl font-semibold">
           Crear nuevo usuario
@@ -186,48 +192,49 @@ export default function UserCreateModal({ isOpen, onClose, onSuccess }: Props) {
               />
 
               <Dropdown>
-  <DropdownTrigger>
-    <Button variant="bordered" className="w-full">
-      {formData.roles && formData.roles.length > 0
-        ? formData.roles.join(", ")
-        : "Seleccionar roles"}
-    </Button>
-  </DropdownTrigger>
+                <DropdownTrigger>
+                  <Button variant="bordered" className="w-full">
+                    {formData.roles && formData.roles.length > 0
+                      ? formData.roles.join(", ")
+                      : "Seleccionar roles"}
+                  </Button>
+                </DropdownTrigger>
 
-  <DropdownMenu
-    selectionMode="multiple"
-    selectedKeys={new Set(formData.roles || [])}
-    onSelectionChange={(keys) =>
-      setFormData((prev) => ({
-        ...prev,
-        roles: Array.from(keys) as string[],
-      }))
-    }
-  >
-    {[
-      "formulador",
-      "fries",
-      "administrador",
-      "docente",
-      "estudiante",
-      "decano",
-      "director_programa",
-      "vicerrectoria",
-    ].map((role) => (
-      <DropdownItem key={role}>{role}</DropdownItem>
-    ))}
-  </DropdownMenu>
-</Dropdown>
-              {(formData.roles?.length === 1 &&
-                (formData.roles.includes("docente") || formData.roles.includes("estudiante"))) && (
-                <Input
-                  label="Programa académico"
-                  placeholder="Ej. Ingeniería de Sistemas"
-                  onChange={(e) =>
-                    handleChange("academic_program", e.target.value)
+                <DropdownMenu
+                  selectionMode="multiple"
+                  selectedKeys={new Set(formData.roles || [])}
+                  onSelectionChange={(keys) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      roles: Array.from(keys) as string[],
+                    }))
                   }
-                />
-              )}
+                >
+                  {[
+                    "formulador",
+                    "fries",
+                    "administrador",
+                    "docente",
+                    "estudiante",
+                    "decano",
+                    "director_programa",
+                    "vicerrectoria",
+                  ].map((role) => (
+                    <DropdownItem key={role}>{role}</DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </Dropdown>
+              {formData.roles?.length === 1 &&
+                (formData.roles.includes("docente") ||
+                  formData.roles.includes("estudiante")) && (
+                  <Input
+                    label="Programa académico"
+                    placeholder="Ej. Ingeniería de Sistemas"
+                    onChange={(e) =>
+                      handleChange("academic_program", e.target.value)
+                    }
+                  />
+                )}
 
               {/* ⚠️ Alertas visuales */}
               {errorMsg && (

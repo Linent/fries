@@ -35,7 +35,7 @@ export default function UserCreateModal({
 
   const [formData, setFormData] = useState<Partial<IUser>>({
     tipo_documento: "CC",
-    role: isStudent ? "estudiante" : "docente",
+    roles: isStudent ? ["estudiante"] : ["docente"],
   });
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{
@@ -93,7 +93,11 @@ export default function UserCreateModal({
             type="password"
             onChange={(e) => handleChange("password", e.target.value)}
           />
-          <Input label="Rol del usuario" value={formData.role} readOnly />
+          <Input
+            label="Rol del usuario"
+            value={Array.isArray(formData.roles) ? formData.roles.join(", ") : ''}
+            readOnly
+          />
           {msg && <Alert color={msg.type}>{msg.text}</Alert>}
         </ModalBody>
         <ModalFooter>
