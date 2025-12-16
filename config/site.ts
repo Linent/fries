@@ -14,7 +14,7 @@ export const siteConfig = {
     {
       label: "Proyectos de Extensión",
       href: "/extension",
-      roles: ["administrador", "fries", "formulador", "decano", "director"],
+      roles: ["administrador", "fries", "formulador", "decano", "director_programa"],
     },
     {
       label: "Facultades",
