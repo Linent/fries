@@ -49,7 +49,7 @@ export default function UserViewModal({ isOpen, onClose, userId }: Props) {
           <p><strong>Nombre:</strong> {user.firstName} {user.secondName} {user.firstLastName} {user.secondLastName}</p>
           <p><strong>Correo:</strong> {user.email}</p>
           <p><strong>Celular:</strong> {user.celular}</p>
-          <p><strong>Rol:</strong> {user.role}</p>
+          <p><strong>Rol:</strong> {user.roles}</p>
           <p><strong>Programa Académico:</strong> {user.academic_program || "N/A"}</p>
           <p><strong>Institución:</strong> {user.institucion || "Universidad Francisco de Paula Santander"}</p>
         </ModalBody>
