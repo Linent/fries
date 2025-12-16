@@ -40,7 +40,7 @@ interface User {
   _id?: string;
   name: string;
   email: string;
-  role: string;
+  roles: string;
   academic_program?: string;
   institucion?: string;
   dni?: string;
@@ -125,7 +125,7 @@ export default function UsersTable({ users, loading, onRefresh }: UsersTableProp
     const data = userList.map((u) => ({
       Nombre: u.name,
       Correo: u.email,
-      Rol: u.role,
+      Rol: u.roles,
       Programa_Académico: u.academic_program || "N/A",
       Institución: u.institucion || "N/A",
       DNI: u.dni || "N/A",
@@ -176,7 +176,7 @@ export default function UsersTable({ users, loading, onRefresh }: UsersTableProp
     const tableData = userList.map((u) => [
       u.name,
       u.email,
-      u.role,
+      u.roles,
       u.academic_program || "N/A",
       u.institucion || "N/A",
       u.dni || "N/A",
@@ -205,7 +205,7 @@ export default function UsersTable({ users, loading, onRefresh }: UsersTableProp
         case "email":
           return <p>{user.email}</p>;
         case "role":
-          return <Chip color="primary" size="sm" variant="flat">{user.role}</Chip>;
+          return <Chip color="primary" size="sm" variant="flat">{user.roles}</Chip>;
         case "academic_program":
           return <p>{user.academic_program || "N/A"}</p>;
         case "institucion":

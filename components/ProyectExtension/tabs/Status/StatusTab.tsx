@@ -73,27 +73,36 @@ export default function StatusTab({ project, onStatusUpdated }: any) {
   } = useProjectStatus(project);
 
   const handleStatusChange = async (next: string) => {
-    const res = await submitStatusChange(next);
+  const res = await submitStatusChange(next);
 
-    if (!res.ok) {
-      setMsg({
-        type: "danger",
-        text: res.error.message || "Error cambiando estado",
-      });
-      return;
-    }
+  if (!res.ok) {
+    setMsg({
+      type: "danger",
+      text: res.error.message || "Error cambiando estado",
+    });
+    return;
+  }
 
-    setMsg({ type: "success", text: "Estado actualizado correctamente." });
+  setMsg({ type: "success", text: "Estado actualizado correctamente." });
 
-    if (next === "en_formulacion") {
-      setTimeout(() => {
-        router.push("/extension");
-      }, 800);
-      return;
-    }
+  const shouldRedirect =
+    next === "en_formulacion" ||
+    next === "aprobado" ||
+    next === "rechazado" ||
+    roles.some((r) =>
+      ["director_programa", "decano", "fries", "vicerrectoria"].includes(r)
+    );
 
-    onStatusUpdated?.(next);
-  };
+  if (shouldRedirect) {
+    setTimeout(() => {
+      router.push("/extension");
+    }, 200);
+    return;
+  }
+
+  onStatusUpdated?.(next);
+};
+
 
   // Nombre del estado
   const readableStatus =

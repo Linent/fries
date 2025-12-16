@@ -31,7 +31,7 @@ export default function UserQuickCreateModal({
 }: Props) {
   // Estado inicial del formulario
   const [formData, setFormData] = useState<Partial<IUser>>({
-    role: fixedRole === "estudiante" ? "estudiante" : "docente",
+    roles: [fixedRole === "estudiante" ? "estudiante" : "docente"],
     tipo_documento: "CC",
   });
 
@@ -175,7 +175,7 @@ export default function UserQuickCreateModal({
           />
 
           {/* 🔒 Campo de rol oculto */}
-          <input type="hidden" value={formData.role} readOnly />
+          <input type="hidden" value={formData.roles} readOnly />
 
           {msg && (
             <div className="col-span-2">

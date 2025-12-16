@@ -63,7 +63,7 @@ export default function UploadDocumentModal({
       placement="center"
     >
       <ModalContent>
-        <ModalHeader>Subir documento</ModalHeader>
+        <ModalHeader>Subir documento maximo de 10 Mb</ModalHeader>
         <ModalBody>
           <Input
             label="Nombre del documento"

@@ -29,7 +29,7 @@ interface Props {
 export default function UserCreateModal({ isOpen, onClose, onSuccess }: Props) {
   const [formData, setFormData] = useState<Partial<IUser>>({
     tipo_documento: "CC",
-    role: "formulador",
+    roles: ["formulador"]
   });
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -52,7 +52,7 @@ export default function UserCreateModal({ isOpen, onClose, onSuccess }: Props) {
       "firstLastName",
       "email",
       "password",
-      "role",
+      "roles",
     ];
 
     for (const field of required) {
@@ -186,30 +186,40 @@ export default function UserCreateModal({ isOpen, onClose, onSuccess }: Props) {
               />
 
               <Dropdown>
-                <DropdownTrigger>
-                  <Button variant="bordered" className="w-full">
-                    {formData.role || "Seleccionar rol"}
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu
-                  onAction={(key) => handleChange("role", String(key))}
-                >
-                  {[
-                    "formulador",
-                    "fries",
-                    "administrador",
-                    "docente",
-                    "estudiante",
-                    "decano",
-                    "director_programa",
-                  ].map((role) => (
-                    <DropdownItem key={role}>{role}</DropdownItem>
-                  ))}
-                </DropdownMenu>
-              </Dropdown>
+  <DropdownTrigger>
+    <Button variant="bordered" className="w-full">
+      {formData.roles && formData.roles.length > 0
+        ? formData.roles.join(", ")
+        : "Seleccionar roles"}
+    </Button>
+  </DropdownTrigger>
 
-              {(formData.role === "docente" ||
-                formData.role === "estudiante") && (
+  <DropdownMenu
+    selectionMode="multiple"
+    selectedKeys={new Set(formData.roles || [])}
+    onSelectionChange={(keys) =>
+      setFormData((prev) => ({
+        ...prev,
+        roles: Array.from(keys) as string[],
+      }))
+    }
+  >
+    {[
+      "formulador",
+      "fries",
+      "administrador",
+      "docente",
+      "estudiante",
+      "decano",
+      "director_programa",
+      "vicerrectoria",
+    ].map((role) => (
+      <DropdownItem key={role}>{role}</DropdownItem>
+    ))}
+  </DropdownMenu>
+</Dropdown>
+              {(formData.roles?.length === 1 &&
+                (formData.roles.includes("docente") || formData.roles.includes("estudiante"))) && (
                 <Input
                   label="Programa académico"
                   placeholder="Ej. Ingeniería de Sistemas"

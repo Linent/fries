@@ -251,13 +251,6 @@ export default function GeneralTab({
       </div>
 
       {/* Descripción */}
-      <Textarea
-        label="Descripción"
-        value={form.description}
-        onChange={(e) => handleChange("description", e.target.value)}
-        readOnly={!editable}
-        rows={4}
-      />
 
       {editable && (
         <div className="flex justify-end mt-4">

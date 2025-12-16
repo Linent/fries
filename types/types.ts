@@ -35,15 +35,7 @@ export interface IUser {
   grupo_investigacion?: string;
   institucion?: string;
   password: string;
-  role:
-    | "director_programa"
-    | "decano"
-    | "fries"
-    | "vicerrectoria"
-    | "docente"
-    | "estudiante"
-    | "formulador"
-    | "administrador";
+  roles: string[]; // 👈 AHORA ES ARREGLO
   enable?: boolean;
   createdAt?: string;
 }

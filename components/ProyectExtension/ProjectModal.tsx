@@ -223,8 +223,8 @@ export default function ProjectModal({
                   />
 
                   <Textarea
-                    label="Descripción del proyecto"
-                    placeholder="Describe el propósito general..."
+                    label="Problema del proyecto"
+                    placeholder="Describe el problema del proyecto..."
                     value={formData.description}
                     onValueChange={(v) => handleChange("description", v)}
                     minRows={3}
@@ -243,7 +243,18 @@ export default function ProjectModal({
                   </Select>
 
                   <div className="flex gap-3">
-                    <DateInput
+                    <Input
+                      required
+                      type="number"
+                      label="Año"
+                      placeholder="Ej: 2025"
+                      value={formData.year}
+                      onValueChange={(v) => {
+                        handleChange("year", v);
+                        if (validateYear(v)) setYearError("");
+                      }}
+                      isInvalid={!!yearError}
+                      errorMessage={yearError}
                       className="flex-1"
                     />
 
