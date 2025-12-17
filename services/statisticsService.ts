@@ -41,6 +41,5 @@ export const getDashboardStats = async (): Promise<DashboardStats> => {
     `${BACKEND_URL}/statistics/overview`,
     { headers: getAuthHeaders() }
   );
-  console.log("Dashboard stats response:", response.data);
   return response.data;
 };
